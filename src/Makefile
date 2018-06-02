@@ -20,10 +20,10 @@ CC = g++
 CFLAGS = -g -Wall -O3 -std=c++11
 
 # define any directories containing header files other than /usr/include
-INCLUDES = ~/RPi-Econet/wiringPi/wiringPi
+INCLUDES = ./wiringPi
 
 # define library paths in addition to /usr/lib
-LDFLAGS = ~/RPi-Econet/wiringPi/wiringPi
+LDFLAGS = ./wiringPi
 
 # define any libraries to link into executable:
 LIBS =	-lwiringPi \
@@ -72,6 +72,7 @@ OBJS =	$(SRCS:.cpp=.o)
 
 # define the executable file
 MAIN =	../FileStore
+DTLSCLIENT =	../client
 
 # --------------------------------------------------------------------------- #
 # The following part of the makefile is generic; it can be used to            #
@@ -83,10 +84,18 @@ MAIN =	../FileStore
 
 all:    $(MAIN)
 	@echo
+	@echo Generating certificates...
+	@echo
+#	@openssl req -x509 -newkey rsa:4096 -days 3650 -nodes -keyout ../client-key.pem -out ../client-cert.pem
+#	@openssl req -x509 -newkey rsa:4096 -days 3650 -nodes -keyout ../server-key.pem -out ../server-cert.pem
+	@echo
 	@echo Done! Your Econet FileStore gateway server is compiled.
 
 $(MAIN): $(OBJS)
 	$(CC) $(CFLAGS) -I$(INCLUDES) -o $(MAIN) $(OBJS) -L$(LDFLAGS) $(LIBS)
+
+$(DTLSCLIENT):
+	$(CC) $(CFLAGS) -I$(INCLUDES) -o $(DTLSCLIENT) dtls_client.cpp dtls.cpp -lssl -lcrypto
 
 # this is a suffix replacement rule for building .o's from .c's
 # it uses automatic variables $<: the name of the prerequisite of
@@ -96,7 +105,10 @@ $(MAIN): $(OBJS)
 	$(CC) $(CFLAGS) -I$(INCLUDES) -c $< -o $@
 
 clean:
-	$(RM) $(OBJS) *~ $(MAIN)
+	$(RM) $(OBJS)
+	$(RM) *~
+	$(RM) ../client-key.pem ../client-cert.pem ../server-key.pem ../server-cert.pem ../client
+	$(RM) $(MAIN)
 
 depend: $(SRCS)
 	makedepend $(INCLUDES) $^

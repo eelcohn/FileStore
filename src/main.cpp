@@ -30,7 +30,7 @@ Station			*stations;
 
 
 
-int main(void) {
+int main(int argc, char** argv) {
 	char	*command = (char *) malloc(MAX_COMMAND_LENGTH);
 	char	**args = NULL;
 	int	result, cmdstart;
