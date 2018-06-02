@@ -1,0 +1,2 @@
+int print(char *buffer);
+

@@ -1,0 +1,26 @@
+!Boot
+===============================================================================
+This script is executed when the FileStore starts. Commands are basically
+the same as on the good ol' Acorn computers.
+
+
+
+!Stations
+===============================================================================
+This file is used to match Econet stations to it's IP address and vice versa.
+Each station's data is stored in a single line. Each of the station's attribute
+is seperated by a <TAB> or <SPACE>. Comments start with a #.
+
+<econet network>	<econet station>	<ip address>	<udp port>	<secure>
+
+
+
+!Users
+===============================================================================
+All user related data is stored in this file. Each user's data is stored on a
+single line. Each of the user's attribute is seperated by a <TAB> or <SPACE>.
+Comments start with a #.
+
+<username>	<password hash>	<privilege level>	<boot option>
+
+
