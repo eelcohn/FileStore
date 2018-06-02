@@ -90,11 +90,9 @@ all:    $(MAIN)
 #	@openssl req -x509 -newkey rsa:4096 -days 3650 -nodes -keyout ../server-key.pem -out ../server-cert.pem
 	@echo
 	@echo Done! Your Econet FileStore gateway server is compiled.
-
+	
 $(MAIN): $(OBJS)
 	$(CC) $(CFLAGS) -I$(INCLUDES) -o $(MAIN) $(OBJS) -L$(LDFLAGS) $(LIBS)
-
-$(DTLSCLIENT):
 	$(CC) $(CFLAGS) -I$(INCLUDES) -o $(DTLSCLIENT) dtls_client.cpp dtls.cpp -lssl -lcrypto
 
 # this is a suffix replacement rule for building .o's from .c's
