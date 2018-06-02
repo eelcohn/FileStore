@@ -27,17 +27,20 @@ namespace econet {
 		unsigned char network;
 		unsigned char station;
 	} Station;
+
 	typedef struct {
 		unsigned char status;
 		unsigned char dst_network, dst_station, src_network, src_station, control, port; // Must make this a union with data[] someday
 		unsigned char data[ECONET_MAX_FRAMESIZE];
 	} Frame;
+
 	typedef struct {
 		unsigned long timeout;		// When this session will timeout (in Unix time)
 		unsigned char network;
 		unsigned char station;
 		unsigned char port;
 	} Session;				// To keep track of sessions with Econet clients
+
 	extern bool	netmon;
 	extern Station known_networks[256];
 	extern Session sessions[ECONET_MAX_SESSIONS];

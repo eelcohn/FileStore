@@ -27,6 +27,7 @@ FILE			*fp_volume;
 FILE			*fp_bootfile;
 User			*users;
 Station			*stations;
+Disc			discs[ECONET_MAX_DISCDRIVES];
 
 
 

@@ -6,7 +6,7 @@
 
 #include <cstdlib>			// Included for strtol()
 #include <cstring>			// Included for memcpy(), strlen()
-#include <ctime>			// Included for time()
+#include <ctime>			// Included for time(), tm
 
 #include "api.h"			// All high-level API calls
 #include "configuration.h"		// Global configuration variables are defined here
@@ -108,6 +108,8 @@ namespace econet {
 	/* Processes one Econet frame */
 	void frameHandler(econet::Frame *frame, int size) {
 		int i;
+		unsigned char urd_handle, csd_handle, lib_handle;
+		unsigned char first_drive, num_drives;
 
 		frame->data[0] = frame->src_network;
 		frame->data[1] = frame->src_station;
@@ -176,6 +178,11 @@ namespace econet {
 
 			// &90 FileServerReply
 			case 0x90 :
+				urd_handle = frame->data[6];
+				csd_handle = frame->data[7];
+				lib_handle = frame->data[8];
+				frame->data[4] = frame->data[5];		// Prepare reply frame
+
 				// Check the OSWORD &14 function code at XY+00
 				switch (frame->data[5]) {
 					// &00: Command line decoding
@@ -236,6 +243,13 @@ namespace econet {
 
 					// &0E: Read disc name information
 					case 0x0E :
+						frame->data[5] = 0x00;	// Return code (0 = success)
+						first_drive = frame->data[8];
+						num_drives = frame->data[9];
+						for (i = first_drive; i < ECONET_MAX_DISCDRIVES; i++) {
+							frame->data[6] = i;
+							strncpy((char *)&frame->data[7 + ((i - first_drive) * 16)], (const char *)discs[i].title, 16);
+						}
 						break;
 
 					// &0F: Read logged on users
@@ -244,6 +258,13 @@ namespace econet {
 
 					// &10: Read date/time
 					case 0x10 :
+						struct tm timeinfo;
+						frame->data[5] = 0x00;	// Return code (0 = success)
+						frame->data[6] = timeinfo.tm_mday;
+						frame->data[7] = ((timeinfo.tm_year & 0x0F) << 4) || timeinfo.tm_mon;
+						frame->data[8] = timeinfo.tm_hour;
+						frame->data[9] = timeinfo.tm_min;
+						frame->data[10] = timeinfo.tm_sec;
 						break;
 
 					// &11: Read EOF (End Of File) information
@@ -280,6 +301,7 @@ namespace econet {
 
 					// &19: Read file server version number
 					case 0x19 :
+						sprintf((char *)&frame->data[5], "v%s.%s.%s", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCHLEVEL);
 						break;
 
 					// &1A: Read file server free space

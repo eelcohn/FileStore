@@ -16,15 +16,13 @@
 #define BOOTFILE			"!Boot"
 #define STATIONSFILE			"!Stations"
 #define USERSFILE			"!Users"
+#define ECONET_MAX_DISCDRIVES		8
 
 #include <cstdio>			// Included for FILE*
 #include <atomic>			// Included for std::atomic
 #include <arpa/inet.h>			// Included for in_addr
 
 #include <openssl/sha.h>		// Included for SHA256_DIGEST_LENGTH
-
-extern std::atomic<bool>	bye;
-extern FILE			*fp_volume;
 
 typedef struct {
 	char username[16];
@@ -38,6 +36,17 @@ typedef struct {
 	unsigned char	network;
 	unsigned char	station;
 } Station;
+
+typedef struct {
+	unsigned char title[16];
+	unsigned char bootoption;
+} Disc;
+
+extern std::atomic<bool>	bye;
+extern FILE			*fp_volume;
+extern Disc			discs[ECONET_MAX_DISCDRIVES];
+
+
 
 void	sigHandler(int sig);
 bool	loadUsers(void);
