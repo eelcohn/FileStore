@@ -112,7 +112,7 @@ namespace ethernet {
 						/* Frame is addressed to a station on our local network */
 						if (frame.status || ECONET_FRAME_TOME) {
 							/* Frame is addressed to us */
-							econet::frameHandler(&frame, rx_length);
+							econet::processFrame(&frame, rx_length);
 						} else {
 							/* Frame is addressed to a station on our local network */
 							frame.data[0] = 0x00; // Set destination network to local network

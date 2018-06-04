@@ -26,7 +26,7 @@ bool			bootdone;
 FILE			*fp_volume;
 FILE			*fp_bootfile;
 User			*users;
-Station			*stations;
+Station			**stations = NULL;
 Disc			discs[ECONET_MAX_DISCDRIVES];
 
 
@@ -88,7 +88,7 @@ int main(int argc, char** argv) {
 #endif
 
 	/* Announce that a new Econet bridge is online on the network */
-	sendBridgeAnnounce();
+	econet::sendBridgeAnnounce();
 
 	while (bye == false) {
 		/* Check network status */
@@ -247,7 +247,7 @@ bool loadUsers(void) {
 
 /* Load !Stations file */
 void loadStations(void) {
-	int i = 0, result, a, b, d;
+	int i = 1, result, n, s, p;
 	char buffer[256];
 	char c[20];
 	FILE *fp_stationsfile;
@@ -261,27 +261,35 @@ void loadStations(void) {
 		while (!feof(fp_stationsfile)) {
 			fgetpos(fp_stationsfile, &pos);
 			if (fgets(buffer, sizeof(buffer), fp_stationsfile) != NULL) {
+				// Skip all comments
 				if (buffer[0] != '#') {
 					fsetpos(fp_stationsfile, &pos);
-					result = fscanf(fp_stationsfile, "%i %i %s %i", &a, &b, c, &d);
+					result = fscanf(fp_stationsfile, "%i %i %s %i", &n, &s, c, &p);
 					if (result == 4) {
-						if ((a < 0) || (a > 127)) {
-							fprintf(stderr, "Invalid econet network value: %i\n", a);
+						if ((n < 0) || (n > 127)) {
+							fprintf(stderr, "Invalid econet network value: %i\n", n);
 							continue;
 						}
-						if ((b < 1) || (b > 254)) {
-							fprintf(stderr, "Invalid econet station value: %i\n", b);
+						if ((s < 1) || (s > 254)) {
+							fprintf(stderr, "Invalid econet station value: %i\n", s);
 							continue;
 						}
 						if (inet_aton(c, &addr) == 0) {
 							fprintf(stderr, "Invalid IP address: %s\n", c);
 							continue;
 						}
-						if ((b < 1) || (b > 65535)) {
-							fprintf(stderr, "Invalid port number: %i\n", d);
+						if ((p < 1) || (p > 65535)) {
+							fprintf(stderr, "Invalid port number: %i\n", p);
 							continue;
 						}
 						i++;
+						stations = (Station **)realloc(stations, i * sizeof (char *) * sizeof(Station));
+//						stations[i]->addr = addr;
+//						stations[i]->port = p;
+//						stations[i]->network = n;
+//						stations[i]->station = s;
+//						printf("IP=%08X port=%i network=%i station=%i\n", stations[i]->addr, stations[i]->port, stations[i]->network, stations[i]->station);
+
 					}
 				}
 			}
@@ -294,10 +302,9 @@ void loadStations(void) {
 }
 
 /* Split (tokenize) a command line */
-#define LSH_TOK_BUFSIZE 64
 char **tokenizeCommandLine(char *line) {
 	const char *TOKEN_DELIMITER = " \t\r\n\a";
-	int bufsize = LSH_TOK_BUFSIZE, position = 0;
+	int bufsize = MAX_COMMAND_LENGTH, position = 0;
 	char **tokens = (char **)malloc(bufsize * sizeof(char*));
 	char *token;
 
@@ -311,7 +318,7 @@ char **tokenizeCommandLine(char *line) {
 		tokens[position++] = token;
 
 		if (position >= bufsize) {
-			bufsize += LSH_TOK_BUFSIZE;
+			bufsize += MAX_COMMAND_LENGTH;
 			tokens = (char **)realloc(tokens, bufsize * sizeof(char*));
 			if (!tokens) {
 				errorHandler(0xFFFFFFFF, "tokenizeCommandLine: allocation error");
@@ -362,30 +369,5 @@ void executeCommand(char **args) {
 
 int totalNumOfUsers(void) {
 	return sizeof(User) / sizeof(User);
-}
-
-/* Send a broadcast frame to announce that a new bridge is available */
-#include "configuration.h"
-void sendBridgeAnnounce(void) {
-	econet::Frame frame;
-
-	frame.data[0x00]	= 0xFF;
-	frame.data[0x01]	= 0xFF;
-	frame.data[0x02]	= configuration::econet_network;
-	frame.data[0x03]	= configuration::econet_station;
-	frame.data[0x04]	= 0x80;
-	frame.data[0x05]	= 0x9C;
-	frame.data[0x06]	= configuration::ethernet_network;
-
-	econet::transmitFrame(&frame, 7);
-
-	frame.data[0x02]	= configuration::ethernet_network;
-	frame.data[0x03]	= configuration::ethernet_station;
-	frame.data[0x06]	= configuration::econet_network;
-
-	ethernet::transmitFrame(&frame, 7);
-#ifdef OPENSSL
-	ethernet::transmitSecureAUNFrame(&frame, 7);
-#endif
 }
 

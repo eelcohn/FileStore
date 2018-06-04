@@ -32,6 +32,7 @@
 *.app
 
 # Certificate files
-*-key.pem
-*-cert.pem
+*.key
+*.cert
+*.pem
 

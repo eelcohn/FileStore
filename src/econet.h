@@ -42,17 +42,17 @@ namespace econet {
 	} Session;				// To keep track of sessions with Econet clients
 
 	extern bool	netmon;
-	extern Station known_networks[256];
-	extern Session sessions[ECONET_MAX_SESSIONS];
+	extern Station	known_networks[256];
+	extern Session	sessions[ECONET_MAX_SESSIONS];
 
 	void	pollNetworkReceive(void);
 	void	transmitFrame(econet::Frame *frame, int size);
 	bool	validateFrame(econet::Frame *frame, int size);
-	void	frameHandler(econet::Frame *frame, int size);
+	void	processFrame(econet::Frame *frame, int size);
+	void	sendBridgeAnnounce(void);
 	bool	startSession(unsigned char network, unsigned char station, unsigned char port);
 	bool	hasSession(unsigned char network, unsigned char station, unsigned char port);
 	bool	endSession(unsigned char network, unsigned char station, unsigned char port);
-	void	netmonPrintFrame(const char *interface, bool tx, econet::Frame *frame, int size);
 }
 
 #endif

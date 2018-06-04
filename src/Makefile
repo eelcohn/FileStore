@@ -11,12 +11,15 @@
 # --------------------------------------------------------------------------- #
 CC = g++
 
-# compiler flags:
-#  -g            adds debugging information to the executable file
-#  -Wall         turns on most, but not all, compiler warnings
-#  -Wall -Wextra turns on almost all compiler warnings
-#  -O2           do some code optimizations when compiling
-#  -std=c++11    turns on compiler and library support for the 2011 C++ standard (needed for thread support)
+# --------------------------------------------------------------------------- #
+# Set the compiler flags:                                                     #
+#  -g            adds debugging information to the executable file            #
+#  -Wall         turns on most, but not all, compiler warnings                #
+#  -Wall -Wextra turns on almost all compiler warnings                        #
+#  -O2           do some code optimizations when compiling                    #
+#  -std=c++11    turns on compiler and library support for the 2011 C++       #
+#                standard (needed for thread support)                         #
+# --------------------------------------------------------------------------- #
 CFLAGS = -g -Wall -O3 -std=c++11
 
 # define any directories containing header files other than /usr/include
@@ -35,7 +38,8 @@ LIBS =	-lwiringPi \
 	-lssl
 
 # define the C source files
-SRCS =	main.cpp \
+MAIN_SRCS = \
+	main.cpp \
 	api.cpp \
 	debug.cpp \
 	econet.cpp \
@@ -67,47 +71,98 @@ SRCS =	main.cpp \
 	commands/star_users.cpp \
 	platforms/linux.cpp
 
+CLIENT_SRCS = \
+	client.cpp \
+	dtls.cpp
+
 # define the C object files
-OBJS =	$(SRCS:.cpp=.o)
+OBJS		= $(MAIN_SRCS:.cpp=.o)
+CLIENT_OBJS	= $(CLIENT_SRCS:.cpp=.o)
 
 # define the executable file
-MAIN =	../FileStore
-DTLSCLIENT =	../client
+MAIN	= ../FileStore
+CLIENT	= ../client
+
+# --------------------------------------------------------------------------- #
+# Define the OpenSSL parameters                                               #
+# --------------------------------------------------------------------------- #
+OPENSSL_KEYSIZE	= 4096
+OPENSSL_EXPIRE	= 3650
+OPENSSL_CA_DIR	= ../conf/keys/
+OPENSSL_SUBJ	= "/C=UK/ST=Cambridgeshire/L=Cambridge/O=Acorn"
+CLIENT_KEY	= client.key
+CLIENT_CERT	= client.cert
+SERVER_KEY	= server.key
+SERVER_CERT	= server.cert
+
+
 
 # --------------------------------------------------------------------------- #
 # The following part of the makefile is generic; it can be used to            #
 # build any executable just by changing the definitions above and by          #
 # deleting dependencies appended to the file from 'make depend'               #
 # --------------------------------------------------------------------------- #
+# this is a suffix replacement rule for building .o's from .c's it uses       #
+# automatic variables $<: the name of the prerequisite of the rule(a .c file) #
+# and $@: the name of the target of the rule (a .o file) (see the gnu make    #
+# manual section about automatic variables)                                   #
+# --------------------------------------------------------------------------- #
+%.o: %.cpp
+	$(CC) $(CFLAGS) -I$(INCLUDES) -c $< -o $@
 
-.PHONY: depend clean
-
-all:    $(MAIN)
-	@echo
-	@echo Generating certificates...
-	@echo
-#	@openssl req -x509 -newkey rsa:4096 -days 3650 -nodes -keyout ../client-key.pem -out ../client-cert.pem
-#	@openssl req -x509 -newkey rsa:4096 -days 3650 -nodes -keyout ../server-key.pem -out ../server-cert.pem
+all:	$(MAIN) $(CLIENT) certs
 	@echo
 	@echo Done! Your Econet FileStore gateway server is compiled.
 	
 $(MAIN): $(OBJS)
+	@echo Linking $(MAIN)...
 	$(CC) $(CFLAGS) -I$(INCLUDES) -o $(MAIN) $(OBJS) -L$(LDFLAGS) $(LIBS)
-	$(CC) $(CFLAGS) -I$(INCLUDES) -o $(DTLSCLIENT) dtls_client.cpp dtls.cpp -lssl -lcrypto
 
-# this is a suffix replacement rule for building .o's from .c's
-# it uses automatic variables $<: the name of the prerequisite of
-# the rule(a .c file) and $@: the name of the target of the rule (a .o file) 
-# (see the gnu make manual section about automatic variables)
-%.o: %.cpp
-	$(CC) $(CFLAGS) -I$(INCLUDES) -c $< -o $@
+$(CLIENT): $(CLIENT_OBJS)
+	@echo Linking $(CLIENT)...
+	$(CC) $(CFLAGS) -I$(INCLUDES) -o $(CLIENT) $(CLIENT_OBJS) -lssl -lcrypto
+
+certs:
+	@echo Generating certificates...
+	@mkdir -p ../conf/keys/
+	@openssl req -x509 -sha512 -newkey rsa:${OPENSSL_KEYSIZE} -days ${OPENSSL_EXPIRE} -nodes -subj ${OPENSSL_SUBJ} -keyout ${OPENSSL_CA_DIR}/${CLIENT_KEY} -out ${OPENSSL_CA_DIR}/${CLIENT_CERT}
+	@chmod 600 ${OPENSSL_CA_DIR}/${CLIENT_KEY}
+	@chmod 600 ${OPENSSL_CA_DIR}/${CLIENT_CERT}
+	@openssl req -x509 -sha512 -newkey rsa:${OPENSSL_KEYSIZE} -days ${OPENSSL_EXPIRE} -nodes -subj ${OPENSSL_SUBJ} -keyout ${OPENSSL_CA_DIR}/${SERVER_KEY} -out ${OPENSSL_CA_DIR}/${SERVER_CERT}
+	@chmod 600 ${OPENSSL_CA_DIR}/${SERVER_KEY}
+	@chmod 600 ${OPENSSL_CA_DIR}/${SERVER_CERT}
 
 clean:
-	$(RM) $(OBJS)
+	$(RM) $(OBJS) $(MAIN)
+	$(RM) $(CLIENT_OBJS) $(CLIENT)
 	$(RM) *~
-	$(RM) ../client-key.pem ../client-cert.pem ../server-key.pem ../server-cert.pem ../client
-	$(RM) $(MAIN)
 
-depend: $(SRCS)
+certclean:
+	$(RM) ${OPENSSL_CA_DIR}/${SERVER_KEY} ${OPENSSL_CA_DIR}/${SERVER_CERT}
+	$(RM) ${OPENSSL_CA_DIR}/${CLIENT_KEY} ${OPENSSL_CA_DIR}/${CLIENT_CERT}
+
+cleanall: clean certclean
+
+depend: $(MAIN_SRCS)
 	makedepend $(INCLUDES) $^
+
+help:
+	@echo Options
+	@echo "   make"
+	@echo "      Compile the sourcecode."
+	@echo ""
+	@echo "   make clean"
+	@echo "      Remove all like object (.o) files and the compiled binaries (FileStore and client)."
+	@echo ""
+	@echo "   make cleanall"
+	@echo "      Remove all object (.o) files, certificates and keys (.key and .cert) and the compiled binaries (FileStore and client)."
+	@echo ""
+	@echo "   make clean"
+	@echo "      Remove all certificates and keys (.key and .cert)."
+	@echo ""
+	@echo "   make certs"
+	@echo "      Generate new certificate and private key pairs for the FileStore server and the debugging client."
+	@echo ""
+	@echo "   make help"
+	@echo "      Show this help screen."
 

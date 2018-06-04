@@ -31,7 +31,7 @@ typedef struct {
 } User;
 
 typedef struct {
-	struct in_addr addr;
+	struct in_addr	addr;
 	unsigned short	port;
 	unsigned char	network;
 	unsigned char	station;

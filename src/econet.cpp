@@ -38,7 +38,7 @@ namespace econet {
 					/* Frame is addressed to a station on our local network */
 					if (frame.status || ECONET_FRAME_TOME) {
 						/* Frame is addressed to us */
-						econet::frameHandler(&frame, rx_length);
+						econet::processFrame(&frame, rx_length);
 					} else {
 						/* Frame is addressed to a station on our local network */
 						frame.data[0] = 0x00; // Set destination network to local network
@@ -106,7 +106,7 @@ namespace econet {
 	}
 
 	/* Processes one Econet frame */
-	void frameHandler(econet::Frame *frame, int size) {
+	void processFrame(econet::Frame *frame, int size) {
 		int i;
 		unsigned char urd_handle, csd_handle, lib_handle;
 		unsigned char first_drive, num_drives;
@@ -512,6 +512,30 @@ namespace econet {
 			default:
 				break;
 		}
+	}
+
+	/* Send a broadcast frame to announce that a new bridge is available */
+	void sendBridgeAnnounce(void) {
+		econet::Frame frame;
+
+		frame.data[0x00]	= 0xFF;
+		frame.data[0x01]	= 0xFF;
+		frame.data[0x02]	= configuration::econet_network;
+		frame.data[0x03]	= configuration::econet_station;
+		frame.data[0x04]	= 0x80;
+		frame.data[0x05]	= 0x9C;
+		frame.data[0x06]	= configuration::ethernet_network;
+
+		econet::transmitFrame(&frame, 7);
+
+		frame.data[0x02]	= configuration::ethernet_network;
+		frame.data[0x03]	= configuration::ethernet_station;
+		frame.data[0x06]	= configuration::econet_network;
+
+		ethernet::transmitFrame(&frame, 7);
+	#ifdef OPENSSL
+		ethernet::transmitSecureAUNFrame(&frame, 7);
+	#endif
 	}
 
 	/* Start a session with a client */

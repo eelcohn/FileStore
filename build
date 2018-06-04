@@ -1,4 +1,9 @@
 cd src
+if [ ! -f wiringPi/wiringPi/wiringPi.h ]; then
+	cd wiringPi
+	git clone git://git.drogon.net/wiringPi
+	cd ..
+fi
 make clean
 make
 cd ..
