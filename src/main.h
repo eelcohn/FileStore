@@ -35,7 +35,6 @@ extern Disc			discs[ECONET_MAX_DISCDRIVES];
 
 
 
-void	sigHandler(int sig);
 bool	loadUsers(void);
 void	loadStations(void);
 void	sendBroadcastFrame(void);

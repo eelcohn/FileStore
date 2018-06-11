@@ -4,10 +4,8 @@
  * (c) Eelco Huininga 2017-2018
  */
 
-#include <cstdlib>			// Included for malloc() and free()
-#include <csignal>			// Included for signal() and SIGxxx definitions
 #include <cstdio>			// Included for NULL, printf(), FILE*, fopen(), fgets(), feof() and fclose()
-#include <cstring>			// Included for strcmp() and strlen()
+#include <cstring>			// Included for memmove(), strtok(), strcmp() and strlen()
 #include <atomic>			// Included for std::atomic
 #include <thread>			// Included for std::thread
 
@@ -39,12 +37,7 @@ int main(int argc, char** argv) {
 	printf("%s v%s.%s.%s\n\n", STARTUP_MESSAGE, VERSION_MAJOR, VERSION_MINOR, VERSION_PATCHLEVEL);
 
 	/* Initialize signal handlers */
-	if (signal(SIGHUP, sigHandler) == SIG_ERR)
-		errorHandler(0xFFFFFFFF, "Can't catch SIGHUP");
-	if (signal(SIGINT, sigHandler) == SIG_ERR)
-		errorHandler(0xFFFFFFFF, "Can't catch SIGINT");
-	if (signal(SIGTERM, sigHandler) == SIG_ERR)
-		errorHandler(0xFFFFFFFF, "Can't catch SIGTERM");
+	initSignals();
 
 	/* Initialize the RaspberryPi GPIO hardware */
 	if ((result = api::initializeHardware()) != 0) {
@@ -71,16 +64,13 @@ int main(int argc, char** argv) {
 	}
 
 	/* Load !Boot */
-	if (!(fp_bootfile = fopen(BOOTFILE, "r"))) {
+	fp_bootfile = fopen(BOOTFILE, "r");
+	if (fp_bootfile == NULL) {
 		bootdone = true;
 	} else {
 		printf("- Execing %s:\n", BOOTFILE);
 		bootdone = false;
 	}
-
-	/* Main loop */
-	bye = false;
-	econet::netmon = false;
 
 	/* Spawn new thread for polling hardware and processing network data */
 	std::thread thread_EconetpollNetworkReceive(econet::pollNetworkReceive);
@@ -92,8 +82,12 @@ int main(int argc, char** argv) {
 	/* Announce that a new Econet bridge is online on the network */
 	econet::sendBridgeAnnounce();
 
-	/* Announce that a new Econet bridge is online on the network */
+	/* Scan the Econet for existing bridges and networks */
 	econet::sendWhatNetBroadcast();
+
+	/* Main loop */
+	bye = false;
+	econet::netmon = false;
 
 	while (bye == false) {
 		/* Check network status */
@@ -104,6 +98,7 @@ int main(int argc, char** argv) {
 		if (bootdone == false) {
 			if (fgets(command, MAX_COMMAND_LENGTH, fp_bootfile) != NULL) {
 				if (feof(fp_bootfile)) {
+
 					fclose(fp_bootfile);
 					bootdone = true;
 				}
@@ -115,7 +110,7 @@ int main(int argc, char** argv) {
 //			cin >> command;
 //			scanf("%80s", command);
 			if (fgets(command, MAX_COMMAND_LENGTH, stdin) == NULL)
-				printf("Could not read stdin.");
+				printf("Could not read stdin.\n");
 		}
 
 		/* Strip leading *'s */
@@ -151,37 +146,6 @@ int main(int argc, char** argv) {
 	free(args);
 
 	return(0);
-}
-
-void sigHandler(int sig) {
-	switch (sig) {
-		case SIGHUP :
-			printf("received SIGHUP\n");
-			exit(-1);
-			break;
-
-		case SIGINT :					// <ctrl>+C was pressed
-			printf("received SIGINT\n");
-			bye = true;
-			break;
-
-		case SIGTERM :
-			printf("received SIGTERM\n");
-			bye = true;
-			// This program will hang on SIGTERM because fgets(), scanf() and cin>> in the main loop don't handle SIGTERMs correctly
-			// Should find another solution to deal with this.. Ideally the program should exit by the return in the main() function
-//			commands::dismount(NULL);
-//			exit(0);
-			break;
-
-		case SIGUSR1 :
-			printf("received SIGUSR1\n");
-			break;
-
-		default :
-			printf("received unknown signal %i\n", sig);
-			break;
-	}
 }
 
 /* Split (tokenize) a command line */

@@ -516,39 +516,41 @@ namespace econet {
 
 	/* Send a broadcast frame to announce that a new bridge is available */
 	void sendBridgeAnnounce(void) {
-		econet::Frame *frame = (econet::Frame *) ECONET_BROADCAST_NEWBRIDGE;
+		econet::Frame frame;
 
-		frame->data[0x02]	= configuration::econet_network;
-		frame->data[0x03]	= configuration::econet_station;
-		frame->data[0x06]	= configuration::ethernet_network;
+		memmove((econet::Frame *) &frame, ECONET_BROADCAST_NEWBRIDGE, sizeof(ECONET_BROADCAST_NEWBRIDGE));
+		frame.data[0x02]	= configuration::econet_network;
+		frame.data[0x03]	= configuration::econet_station;
+		frame.data[0x06]	= configuration::ethernet_network;
 
-		econet::transmitFrame(frame, sizeof(ECONET_BROADCAST_NEWBRIDGE));
+		econet::transmitFrame(&frame, sizeof(ECONET_BROADCAST_NEWBRIDGE));
 
-		frame->data[0x02]	= configuration::ethernet_network;
-		frame->data[0x03]	= configuration::ethernet_station;
-		frame->data[0x06]	= configuration::econet_network;
+		frame.data[0x02]	= configuration::ethernet_network;
+		frame.data[0x03]	= configuration::ethernet_station;
+		frame.data[0x06]	= configuration::econet_network;
 
-		ethernet::transmitFrame(frame, sizeof(ECONET_BROADCAST_NEWBRIDGE));
+		ethernet::transmitFrame(&frame, sizeof(ECONET_BROADCAST_NEWBRIDGE));
 	#ifdef OPENSSL
-		ethernet::transmitSecureAUNFrame(frame, sizeof(ECONET_BROADCAST_NEWBRIDGE));
+		ethernet::transmitSecureAUNFrame(&frame, sizeof(ECONET_BROADCAST_NEWBRIDGE));
 	#endif
 	}
 
 	/* Send a broadcast frame to query other bridges what networks are available */
 	void sendWhatNetBroadcast(void) {
-		econet::Frame *frame = (econet::Frame *) ECONET_BROADCAST_WHATNET;
+		econet::Frame frame;
 
-		frame->data[0x02]	= configuration::econet_network;
-		frame->data[0x03]	= configuration::econet_station;
+		memmove((econet::Frame *) &frame, ECONET_BROADCAST_WHATNET, sizeof(ECONET_BROADCAST_WHATNET));
+		frame.data[0x02]	= configuration::econet_network;
+		frame.data[0x03]	= configuration::econet_station;
 
-		econet::transmitFrame(frame, sizeof(ECONET_BROADCAST_WHATNET));
+		econet::transmitFrame(&frame, sizeof(ECONET_BROADCAST_WHATNET));
 
-		frame->data[0x02]	= configuration::ethernet_network;
-		frame->data[0x03]	= configuration::ethernet_station;
+		frame.data[0x02]	= configuration::ethernet_network;
+		frame.data[0x03]	= configuration::ethernet_station;
 
-		ethernet::transmitFrame(frame, sizeof(ECONET_BROADCAST_WHATNET));
+		ethernet::transmitFrame(&frame, sizeof(ECONET_BROADCAST_WHATNET));
 	#ifdef OPENSSL
-		ethernet::transmitSecureAUNFrame(frame, sizeof(ECONET_BROADCAST_WHATNET));
+		ethernet::transmitSecureAUNFrame(&frame, sizeof(ECONET_BROADCAST_WHATNET));
 	#endif
 	}
 
