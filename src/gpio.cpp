@@ -28,9 +28,7 @@ namespace gpio {
 	}
 
 	int resetADLC(void) {
-#ifdef ECONET_DEBUGBUILD
-		return(0);
-#endif
+#ifndef ECONET_DEBUGBUILD
 		// Set all pins to their default state
 		pinMode(ADLC_D0, INPUT);
 		pinMode(ADLC_D1, INPUT);
@@ -63,7 +61,7 @@ namespace gpio {
 		digitalWrite (CLKOUT, LOW);
 		digitalWrite (CLKOUT_EN, LOW);
 
-		// Start Phi2 clock
+		// Start Phi2 clock (min=0.5us max=10us for a 68B54 according to the datasheet)
 		pinMode(ADLC_PHI2, PWM_OUTPUT);
 		pwmSetMode(PWM_MODE_MS);              // use a fixed frequency
 		pwmSetRange(128);                     // range is 0-128
@@ -79,7 +77,41 @@ namespace gpio {
 		digitalWrite (ADLC_RST, HIGH);
 
 		gpio::initializeADLC();
+#endif
+		return (0);
+	}
 
+	int powerDownADLC(void) {
+#ifndef ECONET_DEBUGBUILD
+		// Pulse RST low to reset the ADLC
+		digitalWrite (ADLC_RST, LOW);
+		delay(ADLC_RESET_PULSEWIDTH);
+		digitalWrite (ADLC_RST, HIGH);
+
+		// Set all pins to their default state
+		pinMode(ADLC_D0, INPUT);
+		pinMode(ADLC_D1, INPUT);
+		pinMode(ADLC_D2, INPUT);
+		pinMode(ADLC_D3, INPUT);
+		pinMode(ADLC_D4, INPUT);
+		pinMode(ADLC_D5, INPUT);
+		pinMode(ADLC_D6, INPUT);
+		pinMode(ADLC_D7, INPUT);
+		pinMode(ADLC_A0, INPUT);
+		pinMode(ADLC_A1, INPUT);
+		pinMode(ADLC_CS, INPUT);
+		pinMode(ADLC_RW, INPUT);
+		pinMode(ADLC_RST, INPUT);
+		pinMode(ADLC_IRQ, INPUT);
+
+		pinMode(CLKIN, INPUT);
+		pinMode(CLKIN_EN, INPUT);
+		pinMode(CLKOUT, INPUT);
+		pinMode(CLKOUT_EN, INPUT);
+
+		// Stop Phi2 clock
+		pinMode(ADLC_PHI2, INPUT);
+#endif
 		return (0);
 	}
 
@@ -92,7 +124,7 @@ namespace gpio {
 		gpio::writeRegister(1, 0x67);
 	}
 
-	// Wait until the ADLC generates an IRQ
+	// Poll the ADLC until an IRQ occurs
 	void waitForADLCInterrupt(void) {
 		bool interrupt;
 
@@ -100,6 +132,7 @@ namespace gpio {
 			interrupt = (gpio::readRegister(0) && 0x80);
 	}
 
+	// ADLC hardware IRQ handler
 	void irqHandler(void) {
 	}
 

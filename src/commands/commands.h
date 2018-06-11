@@ -9,7 +9,7 @@
 
 #include "../api.h"                    // High level API calls to Econet
 
-#include "star_access.h"
+#include "../netfs.h"
 #include "star_cat.h"
 #include "star_cdir.h"
 #include "star_clock.h"

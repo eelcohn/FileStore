@@ -516,25 +516,39 @@ namespace econet {
 
 	/* Send a broadcast frame to announce that a new bridge is available */
 	void sendBridgeAnnounce(void) {
-		econet::Frame frame;
+		econet::Frame *frame = (econet::Frame *) ECONET_BROADCAST_NEWBRIDGE;
 
-		frame.data[0x00]	= 0xFF;
-		frame.data[0x01]	= 0xFF;
-		frame.data[0x02]	= configuration::econet_network;
-		frame.data[0x03]	= configuration::econet_station;
-		frame.data[0x04]	= 0x80;
-		frame.data[0x05]	= 0x9C;
-		frame.data[0x06]	= configuration::ethernet_network;
+		frame->data[0x02]	= configuration::econet_network;
+		frame->data[0x03]	= configuration::econet_station;
+		frame->data[0x06]	= configuration::ethernet_network;
 
-		econet::transmitFrame(&frame, 7);
+		econet::transmitFrame(frame, sizeof(ECONET_BROADCAST_NEWBRIDGE));
 
-		frame.data[0x02]	= configuration::ethernet_network;
-		frame.data[0x03]	= configuration::ethernet_station;
-		frame.data[0x06]	= configuration::econet_network;
+		frame->data[0x02]	= configuration::ethernet_network;
+		frame->data[0x03]	= configuration::ethernet_station;
+		frame->data[0x06]	= configuration::econet_network;
 
-		ethernet::transmitFrame(&frame, 7);
+		ethernet::transmitFrame(frame, sizeof(ECONET_BROADCAST_NEWBRIDGE));
 	#ifdef OPENSSL
-		ethernet::transmitSecureAUNFrame(&frame, 7);
+		ethernet::transmitSecureAUNFrame(frame, sizeof(ECONET_BROADCAST_NEWBRIDGE));
+	#endif
+	}
+
+	/* Send a broadcast frame to query other bridges what networks are available */
+	void sendWhatNetBroadcast(void) {
+		econet::Frame *frame = (econet::Frame *) ECONET_BROADCAST_WHATNET;
+
+		frame->data[0x02]	= configuration::econet_network;
+		frame->data[0x03]	= configuration::econet_station;
+
+		econet::transmitFrame(frame, sizeof(ECONET_BROADCAST_WHATNET));
+
+		frame->data[0x02]	= configuration::ethernet_network;
+		frame->data[0x03]	= configuration::ethernet_station;
+
+		ethernet::transmitFrame(frame, sizeof(ECONET_BROADCAST_WHATNET));
+	#ifdef OPENSSL
+		ethernet::transmitSecureAUNFrame(frame, sizeof(ECONET_BROADCAST_WHATNET));
 	#endif
 	}
 

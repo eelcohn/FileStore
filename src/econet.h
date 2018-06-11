@@ -22,6 +22,11 @@
 #define ECONET_FRAME_ACK		0x20		// Is set when framesize = 4
 #define ECONET_FRAME_DATA		0x40		// Is set when framesize > 4
 
+const unsigned char ECONET_BROADCAST_NEWBRIDGE[]	= {0xff, 0xff, 0x00, 0x00, 0x80, 0x9c, 0x00};
+const unsigned char ECONET_BROADCAST_WHATNET[]		= {0xff, 0xff, 0x00, 0x00, 0x82, 0x9c, 'B', 'R', 'I', 'D', 'G', 'E', 0x9c, 0x00};
+
+
+
 namespace econet {
 	typedef struct {
 		unsigned char network;
@@ -50,6 +55,7 @@ namespace econet {
 	bool	validateFrame(econet::Frame *frame, int size);
 	void	processFrame(econet::Frame *frame, int size);
 	void	sendBridgeAnnounce(void);
+	void	sendWhatNetBroadcast(void);
 	bool	startSession(unsigned char network, unsigned char station, unsigned char port);
 	bool	hasSession(unsigned char network, unsigned char station, unsigned char port);
 	bool	endSession(unsigned char network, unsigned char station, unsigned char port);

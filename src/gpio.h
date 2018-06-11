@@ -30,7 +30,7 @@
 #define CLKIN		20		//
 #define CLKIN_EN	16		//
 
-#define ADLC_RESET_PULSEWIDTH 10       // Pulse RESET low for 500ms
+#define ADLC_RESET_PULSEWIDTH 10       // Pulse RESET low for 500ms (minimum RESET pulse with for the 68B54 according to the datasheet is 0.40us)
 #define ADLC_BUS_SETTLE_TIME 1         // Allow 1 ms for reads and writes to the ADLC
 
 namespace gpio {

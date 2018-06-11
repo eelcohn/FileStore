@@ -42,13 +42,15 @@ MAIN_SRCS = \
 	main.cpp \
 	api.cpp \
 	debug.cpp \
+	dtls.cpp \
 	econet.cpp \
 	ethernet.cpp \
 	errorhandler.cpp \
 	gpio.cpp \
-	dtls.cpp \
+	stations.cpp \
+	users.cpp \
 	commands/commands.cpp \
-	commands/star_access.cpp \
+	netfs.cpp \
 	commands/star_cat.cpp \
 	commands/star_cdir.cpp \
 	commands/star_clock.cpp \
@@ -86,14 +88,16 @@ CLIENT	= ../client
 # --------------------------------------------------------------------------- #
 # Define the OpenSSL parameters                                               #
 # --------------------------------------------------------------------------- #
-OPENSSL_KEYSIZE	= 4096
-OPENSSL_EXPIRE	= 3650
-OPENSSL_CA_DIR	= ../conf/keys/
-OPENSSL_SUBJ	= "/C=UK/ST=Cambridgeshire/L=Cambridge/O=Acorn"
-CLIENT_KEY	= client.key
-CLIENT_CERT	= client.cert
-SERVER_KEY	= server.key
-SERVER_CERT	= server.cert
+OPENSSL_KEYSIZE		= 4096
+# Switch to EC curve x25519 once OpenSSL 1.1.0 is released
+OPENSSL_ECDHCURVE	= x25519
+OPENSSL_EXPIRE		= 3650
+OPENSSL_CA_DIR		= ../conf/keys/
+OPENSSL_SUBJ		= "/C=UK/ST=Cambridgeshire/L=Cambridge/O=Acorn"
+CLIENT_KEY		= client.key
+CLIENT_CERT		= client.cert
+SERVER_KEY		= server.key
+SERVER_CERT		= server.cert
 
 
 
@@ -126,8 +130,10 @@ certs:
 	@echo Generating certificates...
 	@mkdir -p ../conf/keys/
 	@openssl req -x509 -sha512 -newkey rsa:${OPENSSL_KEYSIZE} -days ${OPENSSL_EXPIRE} -nodes -subj ${OPENSSL_SUBJ} -keyout ${OPENSSL_CA_DIR}/${CLIENT_KEY} -out ${OPENSSL_CA_DIR}/${CLIENT_CERT}
+#	@openssl req -x509 -sha512 -newkey ec -pkeyopt ec_paramgen_curve:${OPENSSL_ECDHCURVE} -days ${OPENSSL_EXPIRE} -nodes -subj ${OPENSSL_SUBJ} -keyout ${OPENSSL_CA_DIR}/${CLIENT_KEY} -out ${OPENSSL_CA_DIR}/${CLIENT_CERT}
 	@chmod 600 ${OPENSSL_CA_DIR}/${CLIENT_KEY}
 	@chmod 600 ${OPENSSL_CA_DIR}/${CLIENT_CERT}
+#	@openssl req -x509 -sha512 -newkey ec -pkeyopt ec_paramgen_curve:${OPENSSL_ECDHCURVE} -days ${OPENSSL_EXPIRE} -nodes -subj ${OPENSSL_SUBJ} -keyout ${OPENSSL_CA_DIR}/${SERVER_KEY} -out ${OPENSSL_CA_DIR}/${SERVER_CERT}
 	@openssl req -x509 -sha512 -newkey rsa:${OPENSSL_KEYSIZE} -days ${OPENSSL_EXPIRE} -nodes -subj ${OPENSSL_SUBJ} -keyout ${OPENSSL_CA_DIR}/${SERVER_KEY} -out ${OPENSSL_CA_DIR}/${SERVER_CERT}
 	@chmod 600 ${OPENSSL_CA_DIR}/${SERVER_KEY}
 	@chmod 600 ${OPENSSL_CA_DIR}/${SERVER_CERT}

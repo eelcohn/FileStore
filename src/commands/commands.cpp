@@ -7,6 +7,14 @@
 #include "commands.h"
 
 const char *cmds[][2] = {
+#ifdef DEBUGBUILD
+	{"D",		"<0..7> <0|1>"},
+	{"RS",		"<0..3>"},
+	{"RW",		"<R|W>"},
+	{"CS",		"<ON|OFF>"},
+	{"RST",		"<ON|OFF>"},
+	{"PHI2",	"<ON|OFF>"},
+#endif
 	{"ACCESS",	" <filename> (RWL)"},
 	{"BYE",		""},
 	{"CAT",		""},
@@ -19,6 +27,7 @@ const char *cmds[][2] = {
 	{"DISMOUNT",	""},
 	{"EXIT",	""},
 	{"HELP",	" (command)"},
+	{"I AM",	" <username>"},
 	{"MOUNT",	" <filename>"},
 	{"NETMON",	""},
 	{"NEWUSER",	" <username> <password>"},
@@ -32,6 +41,14 @@ const char *cmds[][2] = {
 };
 
 int (*cmds_jumptable[]) (char **) = {
+#ifdef DEBUGBUILD
+	&debug::d,
+	&debug::rs,
+	&debug::rw,
+	&debug::cs,
+	&debug::rst,
+	&debug::phi2,
+#endif
 	&commands::access,
 	&commands::exit,
 	&commands::cat,
@@ -44,6 +61,7 @@ int (*cmds_jumptable[]) (char **) = {
 	&commands::dismount,
 	&commands::exit,
 	&commands::help,
+	&commands::i_am,
 	&commands::mount,
 	&commands::netmon,
 	&commands::newuser,

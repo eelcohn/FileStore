@@ -9,13 +9,14 @@
 #include <cstdio>			// Included for NULL, printf(), FILE*, fopen(), fgets(), feof() and fclose()
 #include <cstring>			// Included for strcmp() and strlen()
 #include <atomic>			// Included for std::atomic
-#include <thread>			// Included for std::thread 
-#include <openssl/sha.h>		// Included for SHA256_DIGEST_LENGTH
+#include <thread>			// Included for std::thread
 
 #include "errorhandler.h"		// Error handling functions
-#include "main.h"			// Header file for this C++ module
 #include "econet.h"			// Included for pollEconet() thread
 #include "ethernet.h"			// Included for pollEthernet() thread
+#include "main.h"			// Header file for this C++ module
+#include "users.h"			// Included for users::loadUsers()
+#include "stations.h"			// Included for users::loadStations()
 #include "commands/commands.h"		// All * commands
 #include "platforms/platform.h"		// All platform-dependant functions
 
@@ -25,8 +26,6 @@ std::atomic<bool>	bye;
 bool			bootdone;
 FILE			*fp_volume;
 FILE			*fp_bootfile;
-User			*users;
-Station			**stations = NULL;
 Disc			discs[ECONET_MAX_DISCDRIVES];
 
 
@@ -60,13 +59,16 @@ int main(int argc, char** argv) {
 	}
 
 	/* Load !Users (users and passwords) */
-	if (!loadUsers()) {
+	if (!users::loadUsers()) {
 		errorHandler(0x00000021, "Cannot find password file");
 		exit(0x00000021);
 	}
 
 	/* Load !Stations (Econet to/from Ethernet translation table) */
-	loadStations();
+	if (!stations::loadStations()) {
+		errorHandler(0x000000FF, "Could not load !Stations file");
+		exit(0x000000FF);
+	}
 
 	/* Load !Boot */
 	if (!(fp_bootfile = fopen(BOOTFILE, "r"))) {
@@ -89,6 +91,9 @@ int main(int argc, char** argv) {
 
 	/* Announce that a new Econet bridge is online on the network */
 	econet::sendBridgeAnnounce();
+
+	/* Announce that a new Econet bridge is online on the network */
+	econet::sendWhatNetBroadcast();
 
 	while (bye == false) {
 		/* Check network status */
@@ -148,49 +153,6 @@ int main(int argc, char** argv) {
 	return(0);
 }
 
-/*
-#ifdef DEBUGBUILD
-// Temporary include for debugging purposes (D00, D01 ... D80 etc)
-#include "gpio.h"
-
-	if (strcmp(args[0], "D00") == 0) {
-		gpio::writeRegister(0, 0x00);
-	} else
-
-	if (strcmp(args[0], "D01") == 0) {
-		gpio::writeRegister(0, 0x01);
-	} else
-
-	if (strcmp(args[0], "D02") == 0) {
-		gpio::writeRegister(1, 0x02);
-	} else
-
-	if (strcmp(args[0], "D04") == 0) {
-		gpio::writeRegister(2, 0x04);
-	} else
-
-	if (strcmp(args[0], "D08") == 0) {
-		gpio::writeRegister(3, 0x08);
-	} else
-
-	if (strcmp(args[0], "D10") == 0) {
-		gpio::writeRegister(0, 0x10);
-	} else
-
-	if (strcmp(args[0], "D20") == 0) {
-		gpio::writeRegister(1, 0x20);
-	} else
-
-	if (strcmp(args[0], "D40") == 0) {
-		gpio::writeRegister(2, 0x40);
-	} else
-
-	if (strcmp(args[0], "D80") == 0) {
-		gpio::writeRegister(3, 0x80);
-	} else
-#endif
-*/
-
 void sigHandler(int sig) {
 	switch (sig) {
 		case SIGHUP :
@@ -219,85 +181,6 @@ void sigHandler(int sig) {
 		default :
 			printf("received unknown signal %i\n", sig);
 			break;
-	}
-}
-
-/* Load !Users file */
-bool loadUsers(void) {
-	int i = 0, result;
-	FILE *fp_usersfile;
-	char a[256], b[256], c[256];
-
-	printf("- Loading %s: ", USERSFILE);
-
-	fp_usersfile = fopen(USERSFILE, "r");
-	if (fp_usersfile != NULL) {
-		while ((result = fscanf(fp_usersfile, "%s %s %s", a, b, c)) != EOF) {
-			if ((result == 3) && (a[0] != '#')) {
-				i++;
-			}
-		}
-		fclose(fp_usersfile);
-		printf("    %i users loaded.\n", i);
-	} else {
-		return(false);
-	}
-	return(true);
-}
-
-/* Load !Stations file */
-void loadStations(void) {
-	int i = 1, result, n, s, p;
-	char buffer[256];
-	char c[20];
-	FILE *fp_stationsfile;
-	fpos_t pos;
-	in_addr addr;
-
-	printf("- Loading %s: ", STATIONSFILE);
-
-	fp_stationsfile = fopen(STATIONSFILE, "r");
-	if (fp_stationsfile != NULL) {
-		while (!feof(fp_stationsfile)) {
-			fgetpos(fp_stationsfile, &pos);
-			if (fgets(buffer, sizeof(buffer), fp_stationsfile) != NULL) {
-				// Skip all comments
-				if (buffer[0] != '#') {
-					fsetpos(fp_stationsfile, &pos);
-					result = fscanf(fp_stationsfile, "%i %i %s %i", &n, &s, c, &p);
-					if (result == 4) {
-						if ((n < 0) || (n > 127)) {
-							fprintf(stderr, "Invalid econet network value: %i\n", n);
-							continue;
-						}
-						if ((s < 1) || (s > 254)) {
-							fprintf(stderr, "Invalid econet station value: %i\n", s);
-							continue;
-						}
-						if (inet_aton(c, &addr) == 0) {
-							fprintf(stderr, "Invalid IP address: %s\n", c);
-							continue;
-						}
-						if ((p < 1) || (p > 65535)) {
-							fprintf(stderr, "Invalid port number: %i\n", p);
-							continue;
-						}
-						i++;
-						stations = (Station **)realloc(stations, i * sizeof (char *) * sizeof(Station));
-//						stations[i]->addr = addr;
-//						stations[i]->port = p;
-//						stations[i]->network = n;
-//						stations[i]->station = s;
-//						printf("IP=%08X port=%i network=%i station=%i\n", stations[i]->addr, stations[i]->port, stations[i]->network, stations[i]->station);
-
-					}
-				}
-			}
-		}
-		fclose(fp_stationsfile);
-		printf(" %i stations loaded.\n", i);
-	} else {
-		errorHandler(0x000000FF, "Could not load !Stations file");
 	}
 }
 
@@ -365,9 +248,5 @@ void executeCommand(char **args) {
 	}
 
 	errorHandler(0x000000FE, "Bad command");
-}
-
-int totalNumOfUsers(void) {
-	return sizeof(User) / sizeof(User);
 }
 

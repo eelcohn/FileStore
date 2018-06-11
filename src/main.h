@@ -13,9 +13,9 @@
 #define VERSION_MINOR			"00"
 #define VERSION_PATCHLEVEL		"00"
 #define PROMPT				"*"
-#define BOOTFILE			"!Boot"
-#define STATIONSFILE			"!Stations"
-#define USERSFILE			"!Users"
+#define BOOTFILE			"./conf/!Boot"
+#define STATIONSFILE			"./conf/!Stations"
+#define USERSFILE			"./conf/!Users"
 #define ECONET_MAX_DISCDRIVES		8
 
 #include <cstdio>			// Included for FILE*
@@ -23,19 +23,6 @@
 #include <arpa/inet.h>			// Included for in_addr
 
 #include <openssl/sha.h>		// Included for SHA256_DIGEST_LENGTH
-
-typedef struct {
-	char username[16];
-	char pwhash[SHA256_DIGEST_LENGTH];
-	char access[8];
-} User;
-
-typedef struct {
-	struct in_addr	addr;
-	unsigned short	port;
-	unsigned char	network;
-	unsigned char	station;
-} Station;
 
 typedef struct {
 	unsigned char title[16];
