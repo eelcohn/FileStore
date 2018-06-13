@@ -11,14 +11,14 @@ if [ ! -f /usr/include/curses.h ] || [[ ! $(ldconfig -p | grep libncurses) ]]; t
 	exit -1
 fi
 
-if [ ! -f wiringPi/wiringPi/wiringPi.h ]; then
-	echo - Downloading wiringPi...
-	git clone git://git.drogon.net/wiringPi
+if [ ! -f pigpio/pigpio.h ]; then
+	echo Downloading pigpio...
+	git clone https://github.com/joan2937/pigpio/
 fi
 
-if [[ ! $(ldconfig -p | grep wiringPi) ]]; then
-	echo Compiling wiringPi...
-	cd wiringPi/
+if [[ ! $(ldconfig -p | grep pigpio) ]]; then
+	echo Compiling pigpio...
+	cd pigpio
 	./build
 	cd ..
 fi

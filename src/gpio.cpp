@@ -2,11 +2,11 @@
  * Low-level driver for the Econet module interface,
  * connected to the Raspberry Pi GPIO
  *
- * (c) Eelco Huininga 2017
+ * (c) Eelco Huininga 2017-2018
  */
 
 #include "gpio.h"
-#include "wiringPi/wiringPi/wiringPi.h"
+#include <pigpio.h>
 
 using namespace std;
 
@@ -21,31 +21,30 @@ namespace gpio {
 
 
 	int initializeGPIO(void) {
-		wiringPiSetupGpio();                  // Setup using the BCM GPIO pin numbers
-		return (0);
+		return (gpioInitialise());	// Initialize pigpio
 	}
 
 	int resetADLC(void) {
 		// Set all pins to their default state
-		pinMode(ADLC_D0, INPUT);
-		pinMode(ADLC_D1, INPUT);
-		pinMode(ADLC_D2, INPUT);
-		pinMode(ADLC_D3, INPUT);
-		pinMode(ADLC_D4, INPUT);
-		pinMode(ADLC_D5, INPUT);
-		pinMode(ADLC_D6, INPUT);
-		pinMode(ADLC_D7, INPUT);
-		pinMode(ADLC_A0, OUTPUT);
-		pinMode(ADLC_A1, OUTPUT);
-		pinMode(ADLC_CS, OUTPUT);
-		pinMode(ADLC_RW, OUTPUT);
-		pinMode(ADLC_RST, OUTPUT);
-		pinMode(ADLC_IRQ, INPUT);
+		gpioSetMode(ADLC_D0, INPUT);
+		gpioSetMode(ADLC_D1, INPUT);
+		gpioSetMode(ADLC_D2, INPUT);
+		gpioSetMode(ADLC_D3, INPUT);
+		gpioSetMode(ADLC_D4, INPUT);
+		gpioSetMode(ADLC_D5, INPUT);
+		Mode(ADLC_D6, INPUT);
+		Mode(ADLC_D7, INPUT);
+		ode(ADLC_A0, OUTPUT);
+		Mode(ADLC_A1, OUTPUT);
+		Mode(ADLC_CS, OUTPUT);
+		Mode(ADLC_RW, OUTPUT);
+		Mode(ADLC_RST, OUTPUT);
+		Mode(ADLC_IRQ, INPUT);
 
-		pinMode(CLKIN, INPUT);
-		pinMode(CLKIN_EN, OUTPUT);
-		pinMode(CLKOUT, OUTPUT);
-		pinMode(CLKOUT_EN, OUTPUT);
+		Mode(CLKIN, INPUT);
+		Mode(CLKIN_EN, OUTPUT);
+		Mode(CLKOUT, OUTPUT);
+		Mode(CLKOUT_EN, OUTPUT);
 
 		// Initialize bus signals
 		digitalWrite (ADLC_RST, HIGH);        // Don't reset the beast just yet
