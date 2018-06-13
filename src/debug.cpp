@@ -32,8 +32,9 @@ namespace debug {
 	// Temporary include for debugging purposes (D00, D01 ... D80 etc)
 #include <cstdlib>			// Included for strtol() and exit()
 #include <cstring>			// Included for strcmp()
+#include <pigpio.h>
 #include "gpio.h"			// Included for ADLC_* definitions
-#include "wiringPi/wiringPi/wiringPi.h"
+
 namespace debug {
 	int d(char **args) {
 		int dataline, value, gpio_pin;

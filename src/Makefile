@@ -23,14 +23,13 @@ CC = g++
 CFLAGS = -g -Wall -O3 -std=c++11
 
 # define any directories containing header files other than /usr/include
-INCLUDES = ./wiringPi
+INCLUDES = .
 
 # define library paths in addition to /usr/lib
-LDFLAGS = ./wiringPi
+LDFLAGS = .
 
 # define any libraries to link into executable:
-LIBS =	-lwiringPi \
-	-lcrypt \
+LIBS =	-lcrypt \
 	-lcrypto \
 	-lcurses \
 	-lpthread \
