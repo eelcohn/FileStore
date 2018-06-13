@@ -5,6 +5,7 @@
  * (c) Eelco Huininga 2017-2018
  */
 
+#include <
 #include "gpio.h"
 #include <pigpio.h>
 
@@ -25,7 +26,8 @@ namespace gpio {
 	}
 
 	int stopGPIO(void) {
-		return (gpioTerminate());	// Terminate the pigpio library
+		gpioTerminate()			// Terminate the pigpio library
+		return (0);
 	}
 
 	int resetADLC(void) {
@@ -62,14 +64,14 @@ namespace gpio {
 		gpioWrite (CLKOUT_EN, PI_LOW);
 
 		// Start Phi2 clock (min=0.5us max=10us for a 68B54 according to the datasheet)
-		gpioHardwarePWM(ADLC_PHI2, 1000000, 500000);	// Set phi2 to 1MHz, 50% duty cycle
+//		gpioHardwarePWM(ADLC_PHI2, 1000000, 500000);	// Set phi2 to 1MHz, 50% duty cycle
 
 		// Set up IRQ handler
 		gpioSetISRFunc(ADLC_IRQ, FALLING_EDGE, ADLC_INTERRUPT_TIMEOUT, &gpio::irqHandler);
 
 		// Pulse RST low to reset the ADLC
 		gpioWrite(ADLC_RST, PI_LOW);
-		delay(ADLC_RESET_PULSEWIDTH);
+		nsleep(ADLC_RESET_PULSEWIDTH);
 		gpioWrite(ADLC_RST, PI_HIGH);
 
 		gpio::initializeADLC();
@@ -79,7 +81,7 @@ namespace gpio {
 	int powerDownADLC(void) {
 		// Pulse RST low to reset the ADLC
 		gpioWrite(ADLC_RST, PI_LOW);
-		delay(ADLC_RESET_PULSEWIDTH);
+		nsleep(ADLC_RESET_PULSEWIDTH);
 		gpioWrite(ADLC_RST, PI_HIGH);
 
 		// Stop Phi2 clock
@@ -144,7 +146,7 @@ namespace gpio {
 		else
 			gpioWrite(ADLC_A1, PI_LOW);
 		gpioWrite(ADLC_CS, PI_LOW);
-		delay(ADLC_BUS_SETTLE_TIME);
+		nsleep(ADLC_BUS_SETTLE_TIME);
 
 		if (gpioRead(ADLC_D0))
 			result |= 0x01;
@@ -163,7 +165,7 @@ namespace gpio {
 		if (gpioRead(ADLC_D7))
 			result |= 0x80;
 		gpioWrite(ADLC_CS, PI_HIGH);
-		delay(ADLC_BUS_SETTLE_TIME);
+		nsleep(ADLC_BUS_SETTLE_TIME);
 
 		return (result);
 	}
@@ -183,42 +185,42 @@ namespace gpio {
 
 		// Set databus
 		if (value & 0x01)
-			digitalWrite(ADLC_D0, PI_HIGH);
+			gpioWrite(ADLC_D0, PI_HIGH);
 		else
-			digitalWrite(ADLC_D0, PI_LOW);
+			gpioWrite(ADLC_D0, PI_LOW);
 		if (value & 0x02)
-			digitalWrite(ADLC_D1, PI_HIGH);
+			gpioWrite(ADLC_D1, PI_HIGH);
 		else
-			digitalWrite(ADLC_D1, PI_LOW);
+			gpioWrite(ADLC_D1, PI_LOW);
 		if (value & 0x04)
-			digitalWrite(ADLC_D2, PI_HIGH);
+			gpioWrite(ADLC_D2, PI_HIGH);
 		else
-			digitalWrite(ADLC_D2, PI_LOW);
+			gpioWrite(ADLC_D2, PI_LOW);
 		if (value & 0x08)
-			digitalWrite(ADLC_D3, PI_HIGH);
+			gpioWrite(ADLC_D3, PI_HIGH);
 		else
-			digitalWrite(ADLC_D3, PI_LOW);
+			gpioWrite(ADLC_D3, PI_LOW);
 		if (value & 0x10)
-			digitalWrite(ADLC_D4, PI_HIGH);
+			gpioWrite(ADLC_D4, PI_HIGH);
 		else
-			digitalWrite(ADLC_D4, PI_LOW);
+			gpioWrite(ADLC_D4, PI_LOW);
 		if (value & 0x20)
-			digitalWrite(ADLC_D5, PI_HIGH);
+			gpioWrite(ADLC_D5, PI_HIGH);
 		else
-			digitalWrite(ADLC_D5, PI_LOW);
+			gpioWrite(ADLC_D5, PI_LOW);
 		if (value & 0x40)
-			digitalWrite(ADLC_D6, PI_HIGH);
+			gpioWrite(ADLC_D6, PI_HIGH);
 		else
-			digitalWrite(ADLC_D6, PI_LOW);
+			gpioWrite(ADLC_D6, PI_LOW);
 		if (value & 0x80)
-			digitalWrite(ADLC_D7, PI_HIGH);
+			gpioWrite(ADLC_D7, PI_HIGH);
 		else
-			digitalWrite(ADLC_D7, PI_LOW);
+			gpioWrite(ADLC_D7, PI_LOW);
 
 		gpioWrite(ADLC_CS, PI_LOW);
-		delay(ADLC_BUS_SETTLE_TIME);
+		nsleep(ADLC_BUS_SETTLE_TIME);
 		gpioWrite(ADLC_CS, PI_HIGH);
-		delay(ADLC_BUS_SETTLE_TIME);
+		nsleep(ADLC_BUS_SETTLE_TIME);
 	}
 
 	int setClockSpeed(unsigned int clockSpeed, unsigned int dutyCycle) {
@@ -232,7 +234,7 @@ namespace gpio {
 		else
 			gpio::dutyCycle = dutyCycle;
 
-		if (gpio::clockStarted == TRUE)
+		if (gpio::clockStarted == true)
 			gpio::startClock();
 
 		return (0);
