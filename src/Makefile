@@ -32,6 +32,7 @@ LDFLAGS = .
 LIBS =	-lcrypt \
 	-lcrypto \
 	-lcurses \
+	-lpigpio \
 	-lpthread \
 	-lrt \
 	-lssl

@@ -47,8 +47,8 @@ int main(int argc, char** argv) {
 	initSignals();
 
 	/* Initialize the RaspberryPi GPIO hardware */
-	if ((result = api::initializeHardware()) != 0) {
-		printf("Warning &%08X: could not initialize hardware", result);
+	if ((result = api::initializeHardware()) < 0) {
+		errorHandler(result, "Could not initialize hardware");
 		exit(result);
 	}
 

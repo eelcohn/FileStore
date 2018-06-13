@@ -91,9 +91,9 @@ printf("gpio=%i value=%i\n", gpio_pin, value);
 
 		gpioSetMode(gpio_pin, PI_OUTPUT);
 		if (value == 1)
-			digitalWrite(gpio_pin, PI_HIGH);
+			gpioWrite(gpio_pin, PI_HIGH);
 		else
-			digitalWrite(gpio_pin, PI_LOW);
+			gpioWrite(gpio_pin, PI_LOW);
 
 		return(0);
 	}

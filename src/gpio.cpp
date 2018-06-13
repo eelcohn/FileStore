@@ -5,8 +5,8 @@
  * (c) Eelco Huininga 2017-2018
  */
 
-#include <
 #include "gpio.h"
+#include "configuration.h"
 #include <pigpio.h>
 
 using namespace std;
@@ -15,8 +15,6 @@ using namespace std;
 
 
 namespace gpio {
-	unsigned int clockSpeed;
-	unsigned char dutyCycle;
 	bool clockStarted;
 
 
@@ -26,7 +24,7 @@ namespace gpio {
 	}
 
 	int stopGPIO(void) {
-		gpioTerminate()			// Terminate the pigpio library
+		gpioTerminate();		// Terminate the pigpio library
 		return (0);
 	}
 
@@ -64,14 +62,14 @@ namespace gpio {
 		gpioWrite (CLKOUT_EN, PI_LOW);
 
 		// Start Phi2 clock (min=0.5us max=10us for a 68B54 according to the datasheet)
-//		gpioHardwarePWM(ADLC_PHI2, 1000000, 500000);	// Set phi2 to 1MHz, 50% duty cycle
+		gpioHardwarePWM(ADLC_PHI2, 1000000, 500000);	// Set phi2 to 1MHz, 50% duty cycle
 
 		// Set up IRQ handler
-		gpioSetISRFunc(ADLC_IRQ, FALLING_EDGE, ADLC_INTERRUPT_TIMEOUT, &gpio::irqHandler);
+//		gpioSetISRFunc(ADLC_IRQ, FALLING_EDGE, ADLC_INTERRUPT_TIMEOUT, &gpio::irqHandler);
 
 		// Pulse RST low to reset the ADLC
 		gpioWrite(ADLC_RST, PI_LOW);
-		nsleep(ADLC_RESET_PULSEWIDTH);
+		gpioSleep(PI_TIME_RELATIVE, 0, ADLC_RESET_PULSEWIDTH);
 		gpioWrite(ADLC_RST, PI_HIGH);
 
 		gpio::initializeADLC();
@@ -81,7 +79,7 @@ namespace gpio {
 	int powerDownADLC(void) {
 		// Pulse RST low to reset the ADLC
 		gpioWrite(ADLC_RST, PI_LOW);
-		nsleep(ADLC_RESET_PULSEWIDTH);
+		gpioSleep(PI_TIME_RELATIVE, 0, ADLC_RESET_PULSEWIDTH);
 		gpioWrite(ADLC_RST, PI_HIGH);
 
 		// Stop Phi2 clock
@@ -146,7 +144,7 @@ namespace gpio {
 		else
 			gpioWrite(ADLC_A1, PI_LOW);
 		gpioWrite(ADLC_CS, PI_LOW);
-		nsleep(ADLC_BUS_SETTLE_TIME);
+		gpioSleep(PI_TIME_RELATIVE, 0, ADLC_BUS_SETTLE_TIME);
 
 		if (gpioRead(ADLC_D0))
 			result |= 0x01;
@@ -165,7 +163,7 @@ namespace gpio {
 		if (gpioRead(ADLC_D7))
 			result |= 0x80;
 		gpioWrite(ADLC_CS, PI_HIGH);
-		nsleep(ADLC_BUS_SETTLE_TIME);
+		gpioSleep(PI_TIME_RELATIVE, 0, ADLC_BUS_SETTLE_TIME);
 
 		return (result);
 	}
@@ -218,21 +216,21 @@ namespace gpio {
 			gpioWrite(ADLC_D7, PI_LOW);
 
 		gpioWrite(ADLC_CS, PI_LOW);
-		nsleep(ADLC_BUS_SETTLE_TIME);
+		gpioSleep(PI_TIME_RELATIVE, 0, ADLC_BUS_SETTLE_TIME);
 		gpioWrite(ADLC_CS, PI_HIGH);
-		nsleep(ADLC_BUS_SETTLE_TIME);
+		gpioSleep(PI_TIME_RELATIVE, 0, ADLC_BUS_SETTLE_TIME);
 	}
 
 	int setClockSpeed(unsigned int clockSpeed, unsigned int dutyCycle) {
 		if (clockSpeed > MAX_CLOCKSPEED)
 			return (-1);
 		else
-			gpio::clockSpeed = clockSpeed;
+			configuration::clockspeed = clockSpeed;
 
 		if (dutyCycle > MAX_DUTYCYCLE)
 			return (-2);
 		else
-			gpio::dutyCycle = dutyCycle;
+			configuration::dutycycle = dutyCycle;
 
 		if (gpio::clockStarted == true)
 			gpio::startClock();
@@ -245,7 +243,7 @@ namespace gpio {
 	}
 
 	void startClock(void) {
-		gpioHardwarePWM(CLKOUT, gpio::clockSpeed, gpio::dutyCycle);
+		gpioHardwarePWM(CLKOUT, configuration::clockspeed, (configuration::dutycycle * 10000));
 	}
 
 	// Stop Econet clock
