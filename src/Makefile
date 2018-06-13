@@ -129,17 +129,21 @@ $(CLIENT): $(CLIENT_OBJS)
 certs:
 	@echo Generating certificates...
 	@mkdir -p ../conf/keys/
-	@openssl req -x509 -sha512 -newkey rsa:${OPENSSL_KEYSIZE} -days ${OPENSSL_EXPIRE} -nodes -subj ${OPENSSL_SUBJ} -keyout ${OPENSSL_CA_DIR}/${CLIENT_KEY} -out ${OPENSSL_CA_DIR}/${CLIENT_CERT}
+	@if [ ! -f ${OPENSSL_CA_DIR}/${CLIENT_CERT} ]; then \
+		openssl req -x509 -sha512 -newkey rsa:${OPENSSL_KEYSIZE} -days ${OPENSSL_EXPIRE} -nodes -subj ${OPENSSL_SUBJ} -keyout ${OPENSSL_CA_DIR}/${CLIENT_KEY} -out ${OPENSSL_CA_DIR}/${CLIENT_CERT} ; \
+	fi
 #	@openssl req -x509 -sha512 -newkey ec -pkeyopt ec_paramgen_curve:${OPENSSL_ECDHCURVE} -days ${OPENSSL_EXPIRE} -nodes -subj ${OPENSSL_SUBJ} -keyout ${OPENSSL_CA_DIR}/${CLIENT_KEY} -out ${OPENSSL_CA_DIR}/${CLIENT_CERT}
 	@chmod 600 ${OPENSSL_CA_DIR}/${CLIENT_KEY}
 	@chmod 600 ${OPENSSL_CA_DIR}/${CLIENT_CERT}
 #	@openssl req -x509 -sha512 -newkey ec -pkeyopt ec_paramgen_curve:${OPENSSL_ECDHCURVE} -days ${OPENSSL_EXPIRE} -nodes -subj ${OPENSSL_SUBJ} -keyout ${OPENSSL_CA_DIR}/${SERVER_KEY} -out ${OPENSSL_CA_DIR}/${SERVER_CERT}
-	@openssl req -x509 -sha512 -newkey rsa:${OPENSSL_KEYSIZE} -days ${OPENSSL_EXPIRE} -nodes -subj ${OPENSSL_SUBJ} -keyout ${OPENSSL_CA_DIR}/${SERVER_KEY} -out ${OPENSSL_CA_DIR}/${SERVER_CERT}
+	@if [ ! -f ${OPENSSL_CA_DIR}/${SERVER_CERT} ]; then \
+		openssl req -x509 -sha512 -newkey rsa:${OPENSSL_KEYSIZE} -days ${OPENSSL_EXPIRE} -nodes -subj ${OPENSSL_SUBJ} -keyout ${OPENSSL_CA_DIR}/${SERVER_KEY} -out ${OPENSSL_CA_DIR}/${SERVER_CERT} ; \
+	fi
 	@chmod 600 ${OPENSSL_CA_DIR}/${SERVER_KEY}
 	@chmod 600 ${OPENSSL_CA_DIR}/${SERVER_CERT}
 
 clean:
-	$(RM) $(OBJS) $(MAIN)
+	$(RM) $(OBJS) $(MAIN) config.h
 	$(RM) $(CLIENT_OBJS) $(CLIENT)
 	$(RM) *~
 

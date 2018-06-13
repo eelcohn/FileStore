@@ -8,6 +8,7 @@
 #include <cstring>			// Included for memmove(), strtok(), strcmp() and strlen()
 #include <atomic>			// Included for std::atomic
 #include <thread>			// Included for std::thread
+#include <unistd.h>			// geteuid()
 
 #include "errorhandler.h"		// Error handling functions
 #include "econet.h"			// Included for pollEconet() thread
@@ -36,6 +37,12 @@ int main(int argc, char** argv) {
 	/* Print startup message */
 	printf("%s v%s.%s.%s\n\n", STARTUP_MESSAGE, VERSION_MAJOR, VERSION_MINOR, VERSION_PATCHLEVEL);
 
+	/* Check if we're root (needed for wiringPi setupGpio() */
+	if (geteuid() != 0) {
+		printf("Please start again as root\n");
+		exit(1);
+	}
+
 	/* Initialize signal handlers */
 	initSignals();
 
@@ -46,10 +53,10 @@ int main(int argc, char** argv) {
 	}
 
 	/* Reset the Econet module */
-	if ((result = api::resetHardware()) != 0) {
-		errorHandler(result, "Could not reset hardware");
-		exit(result);
-	}
+//	if ((result = api::resetHardware()) != 0) {
+//		errorHandler(result, "Could not reset hardware");
+//		exit(result);
+//	}
 
 	/* Load !Users (users and passwords) */
 	if (!users::loadUsers()) {
@@ -73,17 +80,17 @@ int main(int argc, char** argv) {
 	}
 
 	/* Spawn new thread for polling hardware and processing network data */
-	std::thread thread_EconetpollNetworkReceive(econet::pollNetworkReceive);
-	std::thread thread_EthernetpollNetworkReceive(ethernet::pollAUNNetworkReceive);
+//	std::thread thread_EconetpollNetworkReceive(econet::pollNetworkReceive);
+//	std::thread thread_EthernetpollNetworkReceive(ethernet::pollAUNNetworkReceive);
 #ifdef OPENSSL
-	std::thread thread_EthernetSecureAUNListener(ethernet::dtls_SAUNListener);
+//	std::thread thread_EthernetSecureAUNListener(ethernet::dtls_SAUNListener);
 #endif
 
 	/* Announce that a new Econet bridge is online on the network */
-	econet::sendBridgeAnnounce();
+//	econet::sendBridgeAnnounce();
 
 	/* Scan the Econet for existing bridges and networks */
-	econet::sendWhatNetBroadcast();
+//	econet::sendWhatNetBroadcast();
 
 	/* Main loop */
 	bye = false;
@@ -91,8 +98,8 @@ int main(int argc, char** argv) {
 
 	while (bye == false) {
 		/* Check network status */
-		if (api::networkState())
-			errorHandler(0x000003A3, "No clock signal detected on the Econet network");
+//		if (api::networkState())
+//			errorHandler(0x000003A3, "No clock signal detected on the Econet network");
 
 		printf(PROMPT);
 		if (bootdone == false) {
@@ -135,8 +142,8 @@ int main(int argc, char** argv) {
 	printf("\n");
 
 	/* Wait for the threads to finish */
-	thread_EconetpollNetworkReceive.join();
-	thread_EthernetpollNetworkReceive.join();
+//	thread_EconetpollNetworkReceive.join();
+//	thread_EthernetpollNetworkReceive.join();
 
 	/* Dismount all open disc images */
 	commands::dismount(NULL);

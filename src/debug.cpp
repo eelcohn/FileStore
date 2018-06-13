@@ -86,6 +86,9 @@ namespace debug {
 				exit(0x000000FE);
 		}
 
+printf("gpio=%i value=%i\n", gpio_pin, value);
+
+		pinMode(gpio_pin, OUTPUT);
 		if (value == 1)
 			digitalWrite(gpio_pin, HIGH);
 		else
@@ -102,7 +105,8 @@ namespace debug {
 
 		if ((reg < 0) || (reg > 3))
 			return 0x000000FE;
-
+pinMode(ADLC_A0, OUTPUT);
+pinMode(ADLC_A1, OUTPUT);
 		if (reg & 0x01)
 			digitalWrite (ADLC_A0, HIGH);
 		else
@@ -116,6 +120,7 @@ namespace debug {
 	}
 
 	int rw(char **args) {
+		pinMode(ADLC_RW, OUTPUT);
 		if (strcmp(args[1], "R") == 0)
 			digitalWrite (ADLC_RW, HIGH);
 		else if (strcmp(args[1], "W") == 0)
@@ -127,6 +132,7 @@ namespace debug {
 	}
 
 	int cs(char **args) {
+		pinMode(ADLC_CS, OUTPUT);
 		if (strcmp(args[1], "ON") == 0)
 			digitalWrite (ADLC_CS, LOW);
 		else if (strcmp(args[1], "OFF") == 0)
@@ -138,6 +144,8 @@ namespace debug {
 	}
 
 	int rst(char **args) {
+
+		pinMode(ADLC_RST, OUTPUT);
 		if (strcmp(args[1], "ON") == 0)
 			digitalWrite (ADLC_RST, LOW);
 		else if (strcmp(args[1], "OFF") == 0)
@@ -149,6 +157,7 @@ namespace debug {
 	}
 
 	int phi(char **args) {
+		pinMode(ADLC_PHI2, OUTPUT);
 		if (strcmp(args[1], "ON") == 0)
 			digitalWrite (ADLC_PHI2, LOW);
 		else if (strcmp(args[1], "OFF") == 0)

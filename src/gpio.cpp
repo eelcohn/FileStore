@@ -21,14 +21,11 @@ namespace gpio {
 
 
 	int initializeGPIO(void) {
-#ifndef ECONET_DEBUGBUILD
 		wiringPiSetupGpio();                  // Setup using the BCM GPIO pin numbers
-#endif
 		return (0);
 	}
 
 	int resetADLC(void) {
-#ifndef ECONET_DEBUGBUILD
 		// Set all pins to their default state
 		pinMode(ADLC_D0, INPUT);
 		pinMode(ADLC_D1, INPUT);
@@ -77,12 +74,10 @@ namespace gpio {
 		digitalWrite (ADLC_RST, HIGH);
 
 		gpio::initializeADLC();
-#endif
 		return (0);
 	}
 
 	int powerDownADLC(void) {
-#ifndef ECONET_DEBUGBUILD
 		// Pulse RST low to reset the ADLC
 		digitalWrite (ADLC_RST, LOW);
 		delay(ADLC_RESET_PULSEWIDTH);
@@ -111,7 +106,6 @@ namespace gpio {
 
 		// Stop Phi2 clock
 		pinMode(ADLC_PHI2, INPUT);
-#endif
 		return (0);
 	}
 
