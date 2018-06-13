@@ -88,11 +88,11 @@ namespace debug {
 
 printf("gpio=%i value=%i\n", gpio_pin, value);
 
-		pinMode(gpio_pin, OUTPUT);
+		gpioSetMode(gpio_pin, PI_OUTPUT);
 		if (value == 1)
-			digitalWrite(gpio_pin, HIGH);
+			digitalWrite(gpio_pin, PI_HIGH);
 		else
-			digitalWrite(gpio_pin, LOW);
+			digitalWrite(gpio_pin, PI_LOW);
 
 		return(0);
 	}
@@ -105,26 +105,26 @@ printf("gpio=%i value=%i\n", gpio_pin, value);
 
 		if ((reg < 0) || (reg > 3))
 			return 0x000000FE;
-pinMode(ADLC_A0, OUTPUT);
-pinMode(ADLC_A1, OUTPUT);
+gpioSetMode(ADLC_A0, PI_OUTPUT);
+gpioSetMode(ADLC_A1, PI_OUTPUT);
 		if (reg & 0x01)
-			digitalWrite (ADLC_A0, HIGH);
+			gpioWrite(ADLC_A0, PI_HIGH);
 		else
-			digitalWrite (ADLC_A0, LOW);
+			gpioWrite(ADLC_A0, PI_LOW);
 		if (reg & 0x02)
-			digitalWrite (ADLC_A1, HIGH);
+			gpioWrite(ADLC_A1, PI_HIGH);
 		else
-			digitalWrite (ADLC_A1, LOW);
+			gpioWrite(ADLC_A1, PI_LOW);
 
 		return(0);
 	}
 
 	int rw(char **args) {
-		pinMode(ADLC_RW, OUTPUT);
+		gpioSetMode(ADLC_RW, PI_OUTPUT);
 		if (strcmp(args[1], "R") == 0)
-			digitalWrite (ADLC_RW, HIGH);
+			gpioWrite(ADLC_RW, PI_HIGH);
 		else if (strcmp(args[1], "W") == 0)
-			digitalWrite (ADLC_RW, LOW);
+			gpioWrite(ADLC_RW, PI_LOW);
 		else
 			return 0x000000FE;
 
@@ -132,11 +132,11 @@ pinMode(ADLC_A1, OUTPUT);
 	}
 
 	int cs(char **args) {
-		pinMode(ADLC_CS, OUTPUT);
+		gpioSetMode(ADLC_CS, PI_OUTPUT);
 		if (strcmp(args[1], "ON") == 0)
-			digitalWrite (ADLC_CS, HIGH);
+			gpioWrite(ADLC_CS, PI_HIGH);
 		else if (strcmp(args[1], "OFF") == 0)
-			digitalWrite (ADLC_RW, LOW);
+			gpioWrite(ADLC_RW, PI_LOW);
 		else
 			return 0x000000FE;
 
@@ -145,11 +145,11 @@ pinMode(ADLC_A1, OUTPUT);
 
 	int rst(char **args) {
 
-		pinMode(ADLC_RST, OUTPUT);
+		gpioSetMode(ADLC_RST, PI_OUTPUT);
 		if (strcmp(args[1], "ON") == 0)
-			digitalWrite (ADLC_RST, HIGH);
+			gpioWrite(ADLC_RST, PI_HIGH);
 		else if (strcmp(args[1], "OFF") == 0)
-			digitalWrite (ADLC_RST, LOW);
+			gpioWrite(ADLC_RST, PI_LOW);
 		else
 			return 0x000000FE;
 
@@ -157,11 +157,11 @@ pinMode(ADLC_A1, OUTPUT);
 	}
 
 	int phi(char **args) {
-		pinMode(ADLC_PHI2, OUTPUT);
+		gpioSetMode(ADLC_PHI2, PI_OUTPUT);
 		if (strcmp(args[1], "ON") == 0)
-			digitalWrite (ADLC_PHI2, HIGH);
+			gpioWrite(ADLC_PHI2, PI_HIGH);
 		else if (strcmp(args[1], "OFF") == 0)
-			digitalWrite (ADLC_PHI2, LOW);
+			gpioWrite(ADLC_PHI2, PI_LOW);
 		else
 			return 0x000000FE;
 

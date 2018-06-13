@@ -1,14 +1,11 @@
 /* gpio.h * Low-level driver for the Econet module interface,
  * connected to the Raspberry Pi GPIO
  *
- * (c) Eelco Huininga 2017
+ * (c) Eelco Huininga 2017-2018
  */
 
 #ifndef ECONET_GPIO_HEADER
 #define ECONET_GPIO_HEADER
-
-/* Disables setup of WiringPi: remove on final build */
-#define ECONET_DEBUGBUILD 1
 
 #define ADLC_D0		17		//
 #define ADLC_D1		18		//
@@ -30,11 +27,16 @@
 #define CLKIN		20		//
 #define CLKIN_EN	16		//
 
-#define ADLC_RESET_PULSEWIDTH 10       // Pulse RESET low for 500ms (minimum RESET pulse with for the 68B54 according to the datasheet is 0.40us)
-#define ADLC_BUS_SETTLE_TIME 1         // Allow 1 ms for reads and writes to the ADLC
+#define ADLC_RESET_PULSEWIDTH	10	// Pulse RESET low for 500ms (minimum RESET pulse with for the 68B54 according to the datasheet is 0.40us)
+#define ADLC_BUS_SETTLE_TIME	1	// Allow 1 ms for reads and writes to the ADLC
+#define ADLC_INTERRUPT_TIMEOUT	10	// 10ms before an pigpio interrupt times out
+
+#define MAX_CLOCKSPEED	1000000		// Maximum allowed Econet clock speed is 1MHz
+#define MAX_DUTYCYCLE	999999		// Maximum allowed duty cycle is 999999/1000000
 
 namespace gpio {
 	int initializeGPIO(void);
+	int stopGPIO(void);
 	int resetADLC(void);
 	void initializeADLC(void);
 	void waitForADLCInterrupt(void);

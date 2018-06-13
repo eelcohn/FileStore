@@ -1,4 +1,4 @@
-/* gpio.c
+/* gpio.cpp
  * Low-level driver for the Econet module interface,
  * connected to the Raspberry Pi GPIO
  *
@@ -21,56 +21,56 @@ namespace gpio {
 
 
 	int initializeGPIO(void) {
-		return (gpioInitialise());	// Initialize pigpio
+		return (gpioInitialise());	// Initialize the pigpio library
+	}
+
+	int stopGPIO(void) {
+		return (gpioTerminate());	// Terminate the pigpio library
 	}
 
 	int resetADLC(void) {
 		// Set all pins to their default state
-		gpioSetMode(ADLC_D0, INPUT);
-		gpioSetMode(ADLC_D1, INPUT);
-		gpioSetMode(ADLC_D2, INPUT);
-		gpioSetMode(ADLC_D3, INPUT);
-		gpioSetMode(ADLC_D4, INPUT);
-		gpioSetMode(ADLC_D5, INPUT);
-		Mode(ADLC_D6, INPUT);
-		Mode(ADLC_D7, INPUT);
-		ode(ADLC_A0, OUTPUT);
-		Mode(ADLC_A1, OUTPUT);
-		Mode(ADLC_CS, OUTPUT);
-		Mode(ADLC_RW, OUTPUT);
-		Mode(ADLC_RST, OUTPUT);
-		Mode(ADLC_IRQ, INPUT);
+		gpioSetMode(ADLC_D0, PI_INPUT);
+		gpioSetMode(ADLC_D1, PI_INPUT);
+		gpioSetMode(ADLC_D2, PI_INPUT);
+		gpioSetMode(ADLC_D3, PI_INPUT);
+		gpioSetMode(ADLC_D4, PI_INPUT);
+		gpioSetMode(ADLC_D5, PI_INPUT);
+		gpioSetMode(ADLC_D6, PI_INPUT);
+		gpioSetMode(ADLC_D7, PI_INPUT);
+		gpioSetMode(ADLC_A0, PI_OUTPUT);
+		gpioSetMode(ADLC_A1, PI_OUTPUT);
+		gpioSetMode(ADLC_CS, PI_OUTPUT);
+		gpioSetMode(ADLC_RW, PI_OUTPUT);
+		gpioSetMode(ADLC_RST, PI_INPUT);
+		gpioSetMode(ADLC_IRQ, PI_INPUT);
 
-		Mode(CLKIN, INPUT);
-		Mode(CLKIN_EN, OUTPUT);
-		Mode(CLKOUT, OUTPUT);
-		Mode(CLKOUT_EN, OUTPUT);
+		gpioSetMode(CLKIN, PI_INPUT);
+		gpioSetMode(CLKIN_EN, PI_OUTPUT);
+		gpioSetMode(CLKOUT, PI_OUTPUT);
+		gpioSetMode(CLKOUT_EN, PI_OUTPUT);
 
 		// Initialize bus signals
-		digitalWrite (ADLC_RST, HIGH);        // Don't reset the beast just yet
-		digitalWrite (ADLC_CS, HIGH);         // Disable ADLC for now
-		digitalWrite (ADLC_RW, HIGH);         // Read
-		digitalWrite (ADLC_A0, LOW);          // Select register 0
-		digitalWrite (ADLC_A1, LOW);          // 
+		gpioWrite (ADLC_RST, PI_HIGH);			// Don't reset the beast just yet
+		gpioWrite (ADLC_CS, PI_HIGH);			// Disable ADLC for now
+		gpioWrite (ADLC_RW, PI_HIGH);			// Read
+		gpioWrite (ADLC_A0, PI_LOW);			// Select register 0
+		gpioWrite (ADLC_A1, PI_LOW);			// 
 
-		digitalWrite (CLKIN_EN, LOW);
-		digitalWrite (CLKOUT, LOW);
-		digitalWrite (CLKOUT_EN, LOW);
+		gpioWrite (CLKIN_EN, PI_LOW);
+		gpioWrite (CLKOUT, PI_LOW);
+		gpioWrite (CLKOUT_EN, PI_LOW);
 
 		// Start Phi2 clock (min=0.5us max=10us for a 68B54 according to the datasheet)
-		pinMode(ADLC_PHI2, PWM_OUTPUT);
-		pwmSetMode(0, PWM_MODE_MS);              // use a fixed frequency
-		pwmSetRange(0, 10);                     // range is 0-128
-		pwmSetClock(0, 9);                      // gives a precise 10kHz signal
-		pwmWrite(ADLC_PHI2, 64);                   // duty cycle of 50% (64/128)
+		gpioHardwarePWM(ADLC_PHI2, 1000000, 500000);	// Set phi2 to 1MHz, 50% duty cycle
 
 		// Set up IRQ handler
-		wiringPiISR(ADLC_IRQ, INT_EDGE_FALLING, &gpio::irqHandler);
+		gpioSetISRFunc(ADLC_IRQ, FALLING_EDGE, ADLC_INTERRUPT_TIMEOUT, &gpio::irqHandler);
 
 		// Pulse RST low to reset the ADLC
-		digitalWrite (ADLC_RST, LOW);
+		gpioWrite(ADLC_RST, PI_LOW);
 		delay(ADLC_RESET_PULSEWIDTH);
-		digitalWrite (ADLC_RST, HIGH);
+		gpioWrite(ADLC_RST, PI_HIGH);
 
 		gpio::initializeADLC();
 		return (0);
@@ -78,33 +78,34 @@ namespace gpio {
 
 	int powerDownADLC(void) {
 		// Pulse RST low to reset the ADLC
-		digitalWrite (ADLC_RST, LOW);
+		gpioWrite(ADLC_RST, PI_LOW);
 		delay(ADLC_RESET_PULSEWIDTH);
-		digitalWrite (ADLC_RST, HIGH);
-
-		// Set all pins to their default state
-		pinMode(ADLC_D0, INPUT);
-		pinMode(ADLC_D1, INPUT);
-		pinMode(ADLC_D2, INPUT);
-		pinMode(ADLC_D3, INPUT);
-		pinMode(ADLC_D4, INPUT);
-		pinMode(ADLC_D5, INPUT);
-		pinMode(ADLC_D6, INPUT);
-		pinMode(ADLC_D7, INPUT);
-		pinMode(ADLC_A0, INPUT);
-		pinMode(ADLC_A1, INPUT);
-		pinMode(ADLC_CS, INPUT);
-		pinMode(ADLC_RW, INPUT);
-		pinMode(ADLC_RST, INPUT);
-		pinMode(ADLC_IRQ, INPUT);
-
-		pinMode(CLKIN, INPUT);
-		pinMode(CLKIN_EN, INPUT);
-		pinMode(CLKOUT, INPUT);
-		pinMode(CLKOUT_EN, INPUT);
+		gpioWrite(ADLC_RST, PI_HIGH);
 
 		// Stop Phi2 clock
-		pinMode(ADLC_PHI2, INPUT);
+		gpioHardwarePWM(ADLC_PHI2, 0, 0);
+
+		// Set all pins to their default state
+		gpioSetMode(ADLC_D0, PI_INPUT);
+		gpioSetMode(ADLC_D1, PI_INPUT);
+		gpioSetMode(ADLC_D2, PI_INPUT);
+		gpioSetMode(ADLC_D3, PI_INPUT);
+		gpioSetMode(ADLC_D4, PI_INPUT);
+		gpioSetMode(ADLC_D5, PI_INPUT);
+		gpioSetMode(ADLC_D6, PI_INPUT);
+		gpioSetMode(ADLC_D7, PI_INPUT);
+		gpioSetMode(ADLC_A0, PI_INPUT);
+		gpioSetMode(ADLC_A1, PI_INPUT);
+		gpioSetMode(ADLC_CS, PI_INPUT);
+		gpioSetMode(ADLC_RW, PI_INPUT);
+		gpioSetMode(ADLC_RST, PI_INPUT);
+		gpioSetMode(ADLC_IRQ, PI_INPUT);
+
+		gpioSetMode(CLKIN, PI_INPUT);
+		gpioSetMode(CLKIN_EN, PI_INPUT);
+		gpioSetMode(CLKOUT, PI_INPUT);
+		gpioSetMode(CLKOUT_EN, PI_INPUT);
+
 		return (0);
 	}
 
@@ -133,100 +134,100 @@ namespace gpio {
 	unsigned char readRegister(unsigned char reg) {
 		unsigned char result = 0x00;
 
-		digitalWrite (ADLC_RW, HIGH);
+		gpioWrite(ADLC_RW, PI_HIGH);
 		if (reg & 0x01)
-			digitalWrite (ADLC_A0, HIGH);
+			gpioWrite(ADLC_A0, PI_HIGH);
 		else
-			digitalWrite (ADLC_A0, LOW);
+			gpioWrite(ADLC_A0, PI_LOW);
 		if (reg & 0x02)
-			digitalWrite (ADLC_A1, HIGH);
+			gpioWrite(ADLC_A1, PI_HIGH);
 		else
-			digitalWrite (ADLC_A1, LOW);
-		digitalWrite (ADLC_CS, LOW);
+			gpioWrite(ADLC_A1, PI_LOW);
+		gpioWrite(ADLC_CS, PI_LOW);
 		delay(ADLC_BUS_SETTLE_TIME);
 
-		if (digitalRead(ADLC_D0))
+		if (gpioRead(ADLC_D0))
 			result |= 0x01;
-		if (digitalRead(ADLC_D1))
+		if (gpioRead(ADLC_D1))
 			result |= 0x02;
-		if (digitalRead(ADLC_D2))
+		if (gpioRead(ADLC_D2))
 			result |= 0x04;
-		if (digitalRead(ADLC_D3))
+		if (gpioRead(ADLC_D3))
 			result |= 0x08;
-		if (digitalRead(ADLC_D4))
+		if (gpioRead(ADLC_D4))
 			result |= 0x10;
-		if (digitalRead(ADLC_D5))
+		if (gpioRead(ADLC_D5))
 			result |= 0x20;
-		if (digitalRead(ADLC_D6))
+		if (gpioRead(ADLC_D6))
 			result |= 0x40;
-		if (digitalRead(ADLC_D7))
+		if (gpioRead(ADLC_D7))
 			result |= 0x80;
-		digitalWrite (ADLC_CS, HIGH);
+		gpioWrite(ADLC_CS, PI_HIGH);
 		delay(ADLC_BUS_SETTLE_TIME);
 
 		return (result);
 	}
 
 	void writeRegister(unsigned char reg, unsigned char value) {
-		digitalWrite (ADLC_RW, LOW);
+		gpioWrite(ADLC_RW, PI_LOW);
 
 		// Set address bus
 		if (reg & 0x01)
-			digitalWrite (ADLC_A0, HIGH);
+			gpioWrite(ADLC_A0, PI_HIGH);
 		else
-			digitalWrite (ADLC_A0, LOW);
+			gpioWrite(ADLC_A0, PI_LOW);
 		if (reg & 0x02)
-			digitalWrite (ADLC_A1, HIGH);
+			gpioWrite(ADLC_A1, PI_HIGH);
 		else
-			digitalWrite (ADLC_A1, LOW);
+			gpioWrite(ADLC_A1, PI_LOW);
 
 		// Set databus
 		if (value & 0x01)
-			digitalWrite(ADLC_D0, HIGH);
+			digitalWrite(ADLC_D0, PI_HIGH);
 		else
-			digitalWrite(ADLC_D0, LOW);
+			digitalWrite(ADLC_D0, PI_LOW);
 		if (value & 0x02)
-			digitalWrite(ADLC_D1, HIGH);
+			digitalWrite(ADLC_D1, PI_HIGH);
 		else
-			digitalWrite(ADLC_D1, LOW);
+			digitalWrite(ADLC_D1, PI_LOW);
 		if (value & 0x04)
-			digitalWrite(ADLC_D2, HIGH);
+			digitalWrite(ADLC_D2, PI_HIGH);
 		else
-			digitalWrite(ADLC_D2, LOW);
+			digitalWrite(ADLC_D2, PI_LOW);
 		if (value & 0x08)
-			digitalWrite(ADLC_D3, HIGH);
+			digitalWrite(ADLC_D3, PI_HIGH);
 		else
-			digitalWrite(ADLC_D3, LOW);
+			digitalWrite(ADLC_D3, PI_LOW);
 		if (value & 0x10)
-			digitalWrite(ADLC_D4, HIGH);
+			digitalWrite(ADLC_D4, PI_HIGH);
 		else
-			digitalWrite(ADLC_D4, LOW);
+			digitalWrite(ADLC_D4, PI_LOW);
 		if (value & 0x20)
-			digitalWrite(ADLC_D5, HIGH);
+			digitalWrite(ADLC_D5, PI_HIGH);
 		else
-			digitalWrite(ADLC_D5, LOW);
+			digitalWrite(ADLC_D5, PI_LOW);
 		if (value & 0x40)
-			digitalWrite(ADLC_D6, HIGH);
+			digitalWrite(ADLC_D6, PI_HIGH);
 		else
-			digitalWrite(ADLC_D6, LOW);
+			digitalWrite(ADLC_D6, PI_LOW);
 		if (value & 0x80)
-			digitalWrite(ADLC_D7, HIGH);
+			digitalWrite(ADLC_D7, PI_HIGH);
 		else
-			digitalWrite(ADLC_D7, LOW);
+			digitalWrite(ADLC_D7, PI_LOW);
 
-		digitalWrite (ADLC_CS, LOW);
+		gpioWrite(ADLC_CS, PI_LOW);
 		delay(ADLC_BUS_SETTLE_TIME);
-		digitalWrite (ADLC_CS, HIGH);
+		gpioWrite(ADLC_CS, PI_HIGH);
 		delay(ADLC_BUS_SETTLE_TIME);
 	}
 
-	int setClockSpeed(unsigned int clockSpeed, unsigned char dutyCycle) {
-		if (clockSpeed > 500000)
+	int setClockSpeed(unsigned int clockSpeed, unsigned int dutyCycle) {
+		if (clockSpeed > MAX_CLOCKSPEED)
 			return (-1);
 		else
 			gpio::clockSpeed = clockSpeed;
 
-		if (dutyCycle > 128)
+		if (dutyCycle > MAX_DUTYCYCLE)
 			return (-2);
 		else
 			gpio::dutyCycle = dutyCycle;
@@ -242,16 +243,12 @@ namespace gpio {
 	}
 
 	void startClock(void) {
-		pinMode(CLKOUT, PWM_OUTPUT);
-		pwmSetMode(1, PWM_MODE_MS);              // use a fixed frequency
-		pwmSetRange(1, 128);                     // range is 0-128
-		pwmSetClock(1, 2);                      // gives a precise 10kHz signal
-		pwmWrite(CLKOUT, gpio::dutyCycle);      // duty cycle (0...128)
-		digitalWrite (CLKOUT_EN, HIGH);
+		gpioHardwarePWM(CLKOUT, gpio::clockSpeed, gpio::dutyCycle);
 	}
 
+	// Stop Econet clock
 	void stopClock(void) {
-		digitalWrite (CLKOUT_EN, LOW);
+		gpioHardwarePWM(CLKOUT, 0, 0);
 	}
 }
 
