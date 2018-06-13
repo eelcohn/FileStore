@@ -1,18 +1,25 @@
+set CPUTYPE = `fgrep Hardware /proc/cpuinfo | head -1 | awk '{ print $3 }'`
+
 echo Checking dependencies...
 if [ ! -d /usr/include/openssl/ ] || [[ ! $(ldconfig -p | grep libssl) ]]; then
 	echo Please install libssl-dev
 	exit -1
 fi
 
-if [ ! -f /usr/include/curses.h ] || [[ ! $(ldconfig -p | grep libncurses ) ]]; then
+if [ ! -f /usr/include/curses.h ] || [[ ! $(ldconfig -p | grep libncurses) ]]; then
 	echo Please install libncurses
 	exit -1
 fi
 
-if [ ! -f wiringPi/wiringPi/wiringPi/wiringPi.h ]; then
+if [ ! -f wiringPi/wiringPi/wiringPi.h ]; then
 	echo - Downloading wiringPi...
-	cd wiringPi
 	git clone git://git.drogon.net/wiringPi
+fi
+
+if [[ ! $(ldconfig -p | grep wiringPi) ]]; then
+	echo Compiling wiringPi...
+	cd wiringPi/
+	./build
 	cd ..
 fi
 

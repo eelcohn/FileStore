@@ -134,9 +134,9 @@ pinMode(ADLC_A1, OUTPUT);
 	int cs(char **args) {
 		pinMode(ADLC_CS, OUTPUT);
 		if (strcmp(args[1], "ON") == 0)
-			digitalWrite (ADLC_CS, LOW);
+			digitalWrite (ADLC_CS, HIGH);
 		else if (strcmp(args[1], "OFF") == 0)
-			digitalWrite (ADLC_RW, HIGH);
+			digitalWrite (ADLC_RW, LOW);
 		else
 			return 0x000000FE;
 
@@ -147,9 +147,9 @@ pinMode(ADLC_A1, OUTPUT);
 
 		pinMode(ADLC_RST, OUTPUT);
 		if (strcmp(args[1], "ON") == 0)
-			digitalWrite (ADLC_RST, LOW);
-		else if (strcmp(args[1], "OFF") == 0)
 			digitalWrite (ADLC_RST, HIGH);
+		else if (strcmp(args[1], "OFF") == 0)
+			digitalWrite (ADLC_RST, LOW);
 		else
 			return 0x000000FE;
 
@@ -159,9 +159,9 @@ pinMode(ADLC_A1, OUTPUT);
 	int phi(char **args) {
 		pinMode(ADLC_PHI2, OUTPUT);
 		if (strcmp(args[1], "ON") == 0)
-			digitalWrite (ADLC_PHI2, LOW);
-		else if (strcmp(args[1], "OFF") == 0)
 			digitalWrite (ADLC_PHI2, HIGH);
+		else if (strcmp(args[1], "OFF") == 0)
+			digitalWrite (ADLC_PHI2, LOW);
 		else
 			return 0x000000FE;
 

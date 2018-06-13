@@ -53,10 +53,10 @@ int main(int argc, char** argv) {
 	}
 
 	/* Reset the Econet module */
-//	if ((result = api::resetHardware()) != 0) {
-//		errorHandler(result, "Could not reset hardware");
-//		exit(result);
-//	}
+	if ((result = api::resetHardware()) != 0) {
+		errorHandler(result, "Could not reset hardware");
+		exit(result);
+	}
 
 	/* Load !Users (users and passwords) */
 	if (!users::loadUsers()) {
@@ -81,16 +81,16 @@ int main(int argc, char** argv) {
 
 	/* Spawn new thread for polling hardware and processing network data */
 //	std::thread thread_EconetpollNetworkReceive(econet::pollNetworkReceive);
-//	std::thread thread_EthernetpollNetworkReceive(ethernet::pollAUNNetworkReceive);
-#ifdef OPENSSL
-//	std::thread thread_EthernetSecureAUNListener(ethernet::dtls_SAUNListener);
+	std::thread thread_EthernetpollNetworkReceive(ethernet::pollAUNNetworkReceive);
+#ifdef ECONET_WITHOPENSSL
+	std::thread thread_EthernetSecureAUNListener(ethernet::dtls_SAUNListener);
 #endif
 
 	/* Announce that a new Econet bridge is online on the network */
-//	econet::sendBridgeAnnounce();
+	econet::sendBridgeAnnounce();
 
 	/* Scan the Econet for existing bridges and networks */
-//	econet::sendWhatNetBroadcast();
+	econet::sendWhatNetBroadcast();
 
 	/* Main loop */
 	bye = false;
@@ -143,7 +143,10 @@ int main(int argc, char** argv) {
 
 	/* Wait for the threads to finish */
 //	thread_EconetpollNetworkReceive.join();
-//	thread_EthernetpollNetworkReceive.join();
+	thread_EthernetpollNetworkReceive.join();
+#ifdef ECONET_WITHOPENSSL
+	thread_EthernetSecureAUNListener.join();
+#endif
 
 	/* Dismount all open disc images */
 	commands::dismount(NULL);

@@ -60,9 +60,9 @@ namespace gpio {
 
 		// Start Phi2 clock (min=0.5us max=10us for a 68B54 according to the datasheet)
 		pinMode(ADLC_PHI2, PWM_OUTPUT);
-		pwmSetMode(PWM_MODE_MS);              // use a fixed frequency
-		pwmSetRange(128);                     // range is 0-128
-		pwmSetClock(15);                      // gives a precise 10kHz signal
+		pwmSetMode(0, PWM_MODE_MS);              // use a fixed frequency
+		pwmSetRange(0, 10);                     // range is 0-128
+		pwmSetClock(0, 9);                      // gives a precise 10kHz signal
 		pwmWrite(ADLC_PHI2, 64);                   // duty cycle of 50% (64/128)
 
 		// Set up IRQ handler
@@ -244,9 +244,9 @@ namespace gpio {
 
 	void startClock(void) {
 		pinMode(CLKOUT, PWM_OUTPUT);
-		pwmSetMode(PWM_MODE_MS);              // use a fixed frequency
-		pwmSetRange(128);                     // range is 0-128
-		pwmSetClock(15);                      // gives a precise 10kHz signal
+		pwmSetMode(1, PWM_MODE_MS);              // use a fixed frequency
+		pwmSetRange(1, 128);                     // range is 0-128
+		pwmSetClock(1, 2);                      // gives a precise 10kHz signal
 		pwmWrite(CLKOUT, gpio::dutyCycle);      // duty cycle (0...128)
 		digitalWrite (CLKOUT_EN, HIGH);
 	}
