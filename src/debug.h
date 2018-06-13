@@ -9,4 +9,14 @@ namespace debug {
 	void networkLog(void);
 	void networkLogStop(void);
 }
+#ifdef DEBUGBUILD
+namespace debug {
+	int d(char **args);
+	int rs(char **args);
+	int rw(char **args);
+	int cs(char **args);
+	int rst(char **args);
+	int phi(char **args);
+}
+#endif
 

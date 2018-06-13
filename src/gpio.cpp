@@ -128,6 +128,7 @@ namespace gpio {
 	void waitForADLCInterrupt(void) {
 		bool interrupt;
 
+		interrupt = false;
 		while (interrupt == false)
 			interrupt = (gpio::readRegister(0) && 0x80);
 	}

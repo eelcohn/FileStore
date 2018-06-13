@@ -4,16 +4,18 @@
  * (c) Eelco Huininga 2017-2018
  */
 
+#include "../config.h"
+#include "../debug.h"
 #include "commands.h"
 
 const char *cmds[][2] = {
 #ifdef DEBUGBUILD
-	{"D",		"<0..7> <0|1>"},
-	{"RS",		"<0..3>"},
-	{"RW",		"<R|W>"},
-	{"CS",		"<ON|OFF>"},
-	{"RST",		"<ON|OFF>"},
-	{"PHI2",	"<ON|OFF>"},
+	{"D",		" <0..7> <0|1>"},
+	{"RS",		" <0..3>"},
+	{"RW",		" <R|W>"},
+	{"CS",		" <ON|OFF>"},
+	{"RST",		" <ON|OFF>"},
+	{"PHI2",	" <ON|OFF>"},
 #endif
 	{"ACCESS",	" <filename> (RWL)"},
 	{"BYE",		""},
@@ -37,7 +39,7 @@ const char *cmds[][2] = {
 	{"PRIV",	" <username> (S)"},
 	{"REMUSER",	" <username>"},
 	{"TIME",	""},
-	{"USERS"	" (mask)"}
+	{"USERS",	" (mask)"}
 };
 
 int (*cmds_jumptable[]) (char **) = {
@@ -47,7 +49,7 @@ int (*cmds_jumptable[]) (char **) = {
 	&debug::rw,
 	&debug::cs,
 	&debug::rst,
-	&debug::phi2,
+	&debug::phi,
 #endif
 	&commands::access,
 	&commands::exit,

@@ -11,7 +11,7 @@ void dtls_Begin() {
 }
 
 void dtls_End() {
-	ERR_remove_state(0);
+	ERR_remove_thread_state(NULL);
 	ENGINE_cleanup();
 	CONF_modules_unload(1);
 	ERR_free_strings();

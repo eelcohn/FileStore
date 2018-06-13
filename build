@@ -1,9 +1,22 @@
 cd src
+if [ ! -d /usr/include/openssl/ ]; then
+	echo Please install libssl-dev
+	exit -1
+fi
+
+if [ ! -f /usr/include/curses.h ]; then
+	echo Please install libncurses
+	exit -1
+fi
+
 if [ ! -f wiringPi/wiringPi/wiringPi.h ]; then
 	cd wiringPi
 	git clone git://git.drogon.net/wiringPi
 	cd ..
 fi
+
+echo "#define DEBUGBUILD 1" > config.h
+
 make clean
 make
 cd ..

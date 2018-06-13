@@ -5,6 +5,7 @@
  */
 
 #include <cstdio>			// Included for printf, FILE, fopen, fclose
+#include "config.h"
 #include "configuration.h"		// Included for global configuration
 
 namespace debug {
@@ -26,7 +27,7 @@ namespace debug {
 		fclose(fp_networkLog);
 	}
 }
-#define DEBUGBUILD 1
+
 #ifdef DEBUGBUILD
 	// Temporary include for debugging purposes (D00, D01 ... D80 etc)
 #include <cstdlib>			// Included for strtol() and exit()
@@ -157,6 +158,6 @@ namespace debug {
 
 		return(0);
 	}
-#endif
 }
+#endif
 

@@ -21,8 +21,9 @@
 #include <cstdio>			// Included for FILE*
 #include <atomic>			// Included for std::atomic
 #include <arpa/inet.h>			// Included for in_addr
-
 #include <openssl/sha.h>		// Included for SHA256_DIGEST_LENGTH
+
+#include "config.h"		// Any definitions made by the ./configure or ./build script
 
 typedef struct {
 	unsigned char title[16];

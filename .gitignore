@@ -36,3 +36,6 @@
 *.cert
 *.pem
 
+# config.h
+src/config.h
+
