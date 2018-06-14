@@ -14,9 +14,6 @@ namespace api {
 	int	resetHardware(void);
 	void	startClock(void);
 	void	stopClock(void);
-	int	transmitData(econet::Frame *frame, unsigned int length);
-	int	receiveData(econet::Frame *frame);
-	bool	networkState(void);
 }
 
 #endif

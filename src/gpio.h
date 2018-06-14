@@ -40,9 +40,12 @@ namespace gpio {
 	int resetADLC(void);
 	void initializeADLC(void);
 	void waitForADLCInterrupt(void);
-	void irqHandler(void);
+	void	irqHandler(void);
 	unsigned char readRegister(unsigned char reg);
-	void writeRegister(unsigned char reg, unsigned char value);
+	void	writeRegister(unsigned char reg, unsigned char value);
+	int	transmitData(econet::Frame *frame, unsigned int length);
+	int	receiveData(econet::Frame *frame);
+	bool	networkState(void);
 	int setClockSpeed(unsigned int clockSpeed, unsigned char dutyCycle);
 	int getClockSpeed(void);
 	void startClock(void);
