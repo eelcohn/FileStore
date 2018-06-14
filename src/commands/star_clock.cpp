@@ -6,7 +6,7 @@
 
 #include <cstdio>			// Included for printf()
 #include <cstring>			// Included for strcmp()
-#include "../api.h"			// startClock() and stopClock()
+#include "../platforms/platform.h"	// startClock() and stopClock()
 #include "../settings.h"		// Global configuration variables are defined here
 
 using namespace std;

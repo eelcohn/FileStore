@@ -40,13 +40,12 @@ LIBS =	-lcrypt \
 # define the C source files
 MAIN_SRCS = \
 	main.cpp \
-	api.cpp \
 	debug.cpp \
 	dtls.cpp \
 	econet.cpp \
 	ethernet.cpp \
 	errorhandler.cpp \
-	gpio.cpp \
+	platforms/rpi-gpio.cpp \
 	stations.cpp \
 	users.cpp \
 	commands/commands.cpp \

@@ -136,7 +136,7 @@ gpioSetMode(ADLC_A1, PI_OUTPUT);
 		if (strcmp(args[1], "ON") == 0)
 			gpioWrite(ADLC_CS, PI_HIGH);
 		else if (strcmp(args[1], "OFF") == 0)
-			gpioWrite(ADLC_RW, PI_LOW);
+			gpioWrite(ADLC_CS, PI_LOW);
 		else
 			return 0x000000FE;
 

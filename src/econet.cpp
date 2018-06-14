@@ -8,8 +8,8 @@
 #include <cstring>			// Included for memcpy(), strlen()
 #include <ctime>			// Included for time(), tm
 
-#include "api.h"			// All high-level API calls
-#include "configuration.h"		// Global configuration variables are defined here
+#include "platforms/platform.h"		// All high-level API calls
+#include "settings.h"			// Global configuration variables are defined here
 #include "econet.h"			// Header file for this code
 #include "ethernet.h"			// Included for ethernet::transmitFrame()
 #include "main.h"			// Included for bye variable

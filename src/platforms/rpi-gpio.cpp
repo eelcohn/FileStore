@@ -7,7 +7,6 @@
 
 #include "rpi-gpio.h"
 #include "../settings.h"
-#include <pigpio.h>
 
 using namespace std;
 
@@ -24,16 +23,45 @@ namespace api {
 	}
 
 	int resetHardware(void) {
-		return (resetADLC());		// Reset the Econet Adapter
+		return (rpi_gpio::resetADLC());		// Reset the Econet Adapter
 	}
 
 	int shutdownHardware(void) {
 		gpioTerminate();		// Terminate the pigpio library
 		return (0);
 	}
+
+	int receiveData(econet::Frame *frame) {
+		return rpi_gpio::receiveData(frame);
+	}
+ 
+	int transmitData(econet::Frame *frame, unsigned int length) {
+		return rpi_gpio::transmitData(frame, length);
+	}
+
+	bool networkState(void) {
+		return (rpi_gpio::networkState());
+	}
+
+	int setClockSpeed(unsigned int clockSpeed, unsigned int dutyCycle) {
+		return(rpi_gpio::setClockSpeed(clockSpeed, dutyCycle));
+	}
+
+	int getClockSpeed(void) {
+		return(rpi_gpio::getClockSpeed());
+	}
+
+	void startClock(void) {
+		rpi_gpio::startClock();
+	}
+
+	// Stop Econet clock
+	void stopClock(void) {
+		rpi_gpio::stopClock();
+	}
 }
 
-namespace rpi-gpio {
+namespace rpi_gpio {
 	int resetADLC(void) {
 		// Set all pins to their default state
 		gpioSetMode(ADLC_D0, PI_INPUT);
@@ -78,7 +106,7 @@ namespace rpi-gpio {
 		gpioSleep(PI_TIME_RELATIVE, 0, ADLC_RESET_PULSEWIDTH);
 		gpioWrite(ADLC_RST, PI_HIGH);
 
-		gpio::initializeADLC();
+		rpi_gpio::initializeADLC();
 		return (0);
 	}
 
@@ -117,11 +145,11 @@ namespace rpi-gpio {
 
 	// Initialize ADLC registers
 	void initializeADLC(void) {
-		gpio::writeRegister(0, 0xC1);
-		gpio::writeRegister(3, 0x1E);
-		gpio::writeRegister(1, 0x00);
-		gpio::writeRegister(0, 0x82);
-		gpio::writeRegister(1, 0x67);
+		rpi_gpio::writeRegister(0, 0xC1);
+		rpi_gpio::writeRegister(3, 0x1E);
+		rpi_gpio::writeRegister(1, 0x00);
+		rpi_gpio::writeRegister(0, 0x82);
+		rpi_gpio::writeRegister(1, 0x67);
 	}
 
 	// Poll the ADLC until an IRQ occurs
@@ -130,7 +158,7 @@ namespace rpi-gpio {
 
 		interrupt = false;
 		while (interrupt == false)
-			interrupt = (gpio::readRegister(0) && 0x80);
+			interrupt = (rpi_gpio::readRegister(0) && 0x80);
 	}
 
 	// ADLC hardware IRQ handler
@@ -226,19 +254,20 @@ namespace rpi-gpio {
 		gpioWrite(ADLC_CS, PI_HIGH);
 		gpioSleep(PI_TIME_RELATIVE, 0, ADLC_BUS_SETTLE_TIME);
 	}
+
 	// Send an Econet packet over the Econet interface
 	int transmitData(econet::Frame *frame, unsigned int length) {
 		unsigned int i = 0;
 
-		gpio::writeRegister(1, 0xE7);
-		gpio::writeRegister(0, 0x44);
+		rpi_gpio::writeRegister(1, 0xE7);
+		rpi_gpio::writeRegister(0, 0x44);
 		do {
-			gpio::waitForADLCInterrupt();
-//			gpio::writeRegister(2, (unsigned char *) &frame[i);
+			rpi_gpio::waitForADLCInterrupt();
+//			rpi_gpio::writeRegister(2, (unsigned char *) &frame[i);
 			i++;
 		} while (i < length);
-		gpio::writeRegister(1, 0x3F);
-		gpio::waitForADLCInterrupt();
+		rpi_gpio::writeRegister(1, 0x3F);
+		rpi_gpio::waitForADLCInterrupt();
 
 		return (0);
 	}
@@ -250,17 +279,17 @@ namespace rpi-gpio {
 
 		frame->status = 0x00;
 
-		gpio::writeRegister(0, 0x82);
-		if (gpio::readRegister(1) && 0x01) {
-			while (!(gpio::readRegister(1) && 0x80))
-				frame->data[i++] = gpio::readRegister(2);
+		rpi_gpio::writeRegister(0, 0x82);
+		if (rpi_gpio::readRegister(1) && 0x01) {
+			while (!(rpi_gpio::readRegister(1) && 0x80))
+				frame->data[i++] = rpi_gpio::readRegister(2);
 
-			gpio::writeRegister(0, 0x00);
-			gpio::writeRegister(1, 0x84);
-			status = gpio::readRegister(1);
+			rpi_gpio::writeRegister(0, 0x00);
+			rpi_gpio::writeRegister(1, 0x84);
+			status = rpi_gpio::readRegister(1);
 			if (status && 0x02) {
 				if (status && 0x80)
-					status = gpio::readRegister(2);	// Fetch last byte in receive buffer
+					status = rpi_gpio::readRegister(2);	// Fetch last byte in receive buffer
 				if (frame->data[3] == 0)	// Replace local network (0) with our real network number
 					frame->data[3] = configuration::econet_network;
 				result = i - 1;
@@ -274,7 +303,7 @@ namespace rpi-gpio {
 	// SWI &4001A: Econet_NetworkState
 	bool networkState(void) {
 		// Return the DCD bit in ADLC status register 2
-		return (gpio::readRegister(1) && 0x20);
+		return (rpi_gpio::readRegister(1) && 0x20);
 	}
 
 	int setClockSpeed(unsigned int clockSpeed, unsigned int dutyCycle) {
@@ -288,8 +317,8 @@ namespace rpi-gpio {
 		else
 			configuration::dutycycle = dutyCycle;
 
-		if (gpio::clockStarted == true)
-			gpio::startClock();
+		if (api::clockStarted == true)
+			rpi_gpio::startClock();
 
 		return (0);
 	}

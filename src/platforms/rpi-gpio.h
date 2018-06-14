@@ -8,6 +8,9 @@
 #ifndef ECONET_GPIO_HEADER
 #define ECONET_GPIO_HEADER
 
+#include "../econet.h"			// Included for Econet::frame
+#include <pigpio.h>
+
 #define ADLC_D0		17		//
 #define ADLC_D1		18		//
 #define ADLC_D2		27		//
@@ -39,19 +42,26 @@ namespace api {
 	int	initializeHardware(void);
 	int	resetHardware(void);
 	int	shutdownHardware(void);
+	int	transmitData(econet::Frame *frame, unsigned int length);
+	int	receiveData(econet::Frame *frame);
+	bool	networkState(void);
+	int	setClockSpeed(unsigned int clockSpeed, unsigned int dutyCycle);
+	int	getClockSpeed(void);
+	void	startClock(void);
+	void	stopClock(void);
 }
 
-namespace rpi-gpio {
+namespace rpi_gpio {
 	int	resetADLC(void);
 	void	initializeADLC(void);
 	void	waitForADLCInterrupt(void);
 	void	irqHandler(void);
 	unsigned char readRegister(unsigned char reg);
 	void	writeRegister(unsigned char reg, unsigned char value);
-	int	transmitData(econet::Frame *frame, unsigned int length);
+	int	transmitData(econet::Frame *frame, unsigned int length);	
 	int	receiveData(econet::Frame *frame);
 	bool	networkState(void);
-	int	setClockSpeed(unsigned int clockSpeed, unsigned char dutyCycle);
+	int	setClockSpeed(unsigned int clockSpeed, unsigned int dutyCycle);
 	int	getClockSpeed(void);
 	void	startClock(void);
 	void	stopClock(void);

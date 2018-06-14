@@ -7,7 +7,7 @@
 #ifndef ECONET_COMMANDS_HEADER
 #define ECONET_COMMANDS_HEADER
 
-#include "../api.h"                    // High level API calls to Econet
+#include "../platforms/platform.h"                    // High level API calls to Econet
 
 #include "../netfs.h"
 #include "star_cat.h"
