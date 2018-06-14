@@ -10,7 +10,7 @@
 #include <netinet/in.h>			// Included for IPPROTO_UDP
 #include <arpa/inet.h>			// Included for inet_aton()
 
-#include "configuration.h"		// Global configuration variables are defined here
+#include "settings.h"			// Global configuration variables are defined here
 #include "dtls.h"
 #include "econet.h"			// Included for Frame
 #include "ethernet.h"			// Header file for this code

@@ -1,12 +1,12 @@
-/* gpio.cpp
+/* rpi-gpio.cpp
  * Low-level driver for the Econet module interface,
  * connected to the Raspberry Pi GPIO
  *
  * (c) Eelco Huininga 2017-2018
  */
 
-#include "gpio.h"
-#include "configuration.h"
+#include "rpi-gpio.h"
+#include "../settings.h"
 #include <pigpio.h>
 
 using namespace std;
@@ -14,20 +14,26 @@ using namespace std;
 
 
 
-namespace gpio {
+namespace api {
 	bool clockStarted;
 
 
 
-	int initializeGPIO(void) {
+	int initializeHardware(void) {
 		return (gpioInitialise());	// Initialize the pigpio library
 	}
 
-	int stopGPIO(void) {
+	int resetHardware(void) {
+		return (resetADLC());		// Reset the Econet Adapter
+	}
+
+	int shutdownHardware(void) {
 		gpioTerminate();		// Terminate the pigpio library
 		return (0);
 	}
+}
 
+namespace rpi-gpio {
 	int resetADLC(void) {
 		// Set all pins to their default state
 		gpioSetMode(ADLC_D0, PI_INPUT);

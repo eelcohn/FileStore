@@ -1,4 +1,4 @@
-/* configuration.h
+/* star_configure.h
  * *CONFIGURE command handler
  *
  * (c) Eelco Huininga 2017

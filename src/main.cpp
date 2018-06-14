@@ -17,7 +17,7 @@
 #include "users.h"			// Included for users::loadUsers()
 #include "stations.h"			// Included for users::loadStations()
 #include "commands/commands.h"		// All * commands
-#include "platforms/platform.h"		// All platform-dependant functions
+#include "platforms/platform.h"		// All platform- and hardware-dependant functions
 
 using namespace std;
 

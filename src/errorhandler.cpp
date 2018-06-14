@@ -4,8 +4,8 @@
  * (c) Eelco Huininga 2017-2018
  */
 
-#include <cstdio>			// Included for printf() and sprintf()
-#include "configuration.h"             // Global configuration variables are defined here
+#include <cstdio>		// Included for printf() and sprintf()
+#include "settings.h"		// Global configuration variables are defined here
 
 using namespace std;
 

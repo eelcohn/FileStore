@@ -6,8 +6,8 @@
 
 #include <cstdio>			// Included for printf()
 #include <cstring>			// Included for strcmp()
-#include "../api.h"
-#include "../configuration.h"		// Global configuration variables are defined here
+#include "../api.h"			// startClock() and stopClock()
+#include "../settings.h"		// Global configuration variables are defined here
 
 using namespace std;
 
@@ -22,7 +22,7 @@ namespace commands {
 				api::startClock();
 				printf("Internal clock is now on (%iHz %i%%).\n", configuration::clockspeed, configuration::dutycycle);
 			} else if (strcmp(args[1], "OFF") == 0) {
-				api::startClock();
+				api::stopClock();
 				printf("Internal clock is now off.\n");
 			} else if (strcmp(args[1], "AUTO") == 0) {
 				printf("CLOCK AUTO - Not yet implemented\n");

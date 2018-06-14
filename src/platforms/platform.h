@@ -6,5 +6,6 @@
 
 #ifdef __GNUC__
 #include "linux.h"
+#include "rpi-gpio.h"
 #endif
 

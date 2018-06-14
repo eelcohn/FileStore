@@ -1,4 +1,4 @@
-/* configuration.h
+/* settings.h
  * Global configuration variables are defined here
  *
  * (c) Eelco Huininga 2017

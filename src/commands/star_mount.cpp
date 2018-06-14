@@ -5,7 +5,7 @@
  */
 
 #include <cstdio>			// Included for NULL and fopen()
-#include "../configuration.h"		// Global configuration variables are defined here
+#include "../settings.h"		// Global configuration variables are defined here
 
 extern FILE	*fp_volume;
 

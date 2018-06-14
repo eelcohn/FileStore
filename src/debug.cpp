@@ -6,7 +6,7 @@
 
 #include <cstdio>			// Included for printf, FILE, fopen, fclose
 #include "config.h"
-#include "configuration.h"		// Included for global configuration
+#include "settings.h"			// Included for global configuration
 
 namespace debug {
 	FILE *fp_networkLog;
@@ -32,8 +32,7 @@ namespace debug {
 	// Temporary include for debugging purposes (D00, D01 ... D80 etc)
 #include <cstdlib>			// Included for strtol() and exit()
 #include <cstring>			// Included for strcmp()
-#include <pigpio.h>
-#include "gpio.h"			// Included for ADLC_* definitions
+#include "platforms/platform.h"			// Included for ADLC_* definitions
 
 namespace debug {
 	int d(char **args) {

@@ -1,4 +1,5 @@
-/* gpio.h * Low-level driver for the Econet module interface,
+/* rpi-gpio.h
+ * Low-level driver for the Econet module interface,
  * connected to the Raspberry Pi GPIO
  *
  * (c) Eelco Huininga 2017-2018
@@ -34,22 +35,26 @@
 #define MAX_CLOCKSPEED	1000000		// Maximum allowed Econet clock speed is 1MHz
 #define MAX_DUTYCYCLE	999999		// Maximum allowed duty cycle is 999999/1000000
 
-namespace gpio {
-	int initializeGPIO(void);
-	int stopGPIO(void);
-	int resetADLC(void);
-	void initializeADLC(void);
-	void waitForADLCInterrupt(void);
+namespace api {
+	int	initializeHardware(void);
+	int	resetHardware(void);
+	int	shutdownHardware(void);
+}
+
+namespace rpi-gpio {
+	int	resetADLC(void);
+	void	initializeADLC(void);
+	void	waitForADLCInterrupt(void);
 	void	irqHandler(void);
 	unsigned char readRegister(unsigned char reg);
 	void	writeRegister(unsigned char reg, unsigned char value);
 	int	transmitData(econet::Frame *frame, unsigned int length);
 	int	receiveData(econet::Frame *frame);
 	bool	networkState(void);
-	int setClockSpeed(unsigned int clockSpeed, unsigned char dutyCycle);
-	int getClockSpeed(void);
-	void startClock(void);
-	void stopClock(void);
+	int	setClockSpeed(unsigned int clockSpeed, unsigned char dutyCycle);
+	int	getClockSpeed(void);
+	void	startClock(void);
+	void	stopClock(void);
 }
 #endif
 
