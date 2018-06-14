@@ -63,6 +63,7 @@ namespace rpi_gpio {
 	bool	networkState(void);
 	int	setClockSpeed(unsigned int clockSpeed, unsigned int dutyCycle);
 	int	getClockSpeed(void);
+	int	getClockSpeed_inthandler(void);
 	void	startClock(void);
 	void	stopClock(void);
 }

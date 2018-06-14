@@ -62,6 +62,8 @@ namespace api {
 }
 
 namespace rpi_gpio {
+	unsigned long	numpulses;
+
 	int resetADLC(void) {
 		// Set all pins to their default state
 		gpioSetMode(ADLC_D0, PI_INPUT);
@@ -324,16 +326,28 @@ namespace rpi_gpio {
 	}
 
 	int getClockSpeed(void) {
-		return (-1);
+		numpulses = 0;
+
+		gpioWrite(CLKIN_EN, PI_HIGH);
+		gpioSleep(PI_TIME_RELATIVE, 0, 3000000);	// Count pulses for 3 seconds
+		gpioWrite(CLKIN_EN, PI_LOW);
+
+		return (numpulses / 3);
+	}
+
+	int getClockSpeed_inthandler(void) {
+		numpulses++;
 	}
 
 	void startClock(void) {
 		gpioHardwarePWM(CLKOUT, configuration::clockspeed, (configuration::dutycycle * 10000));
+		gpioWrite(CLKOUT_EN, PI_HIGH);
 	}
 
 	// Stop Econet clock
 	void stopClock(void) {
 		gpioHardwarePWM(CLKOUT, 0, 0);
+		gpioWrite(CLKOUT_EN, PI_LOW);
 	}
 }
 

@@ -151,6 +151,9 @@ int main(int argc, char** argv) {
 	/* Dismount all open disc images */
 	commands::dismount(NULL);
 
+	/* Shutdown the hardware interface(s) */
+	api::shutdownHardware();
+
 	/* Release memory */
 	free(command);
 	free(args);

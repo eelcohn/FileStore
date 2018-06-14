@@ -45,11 +45,10 @@ MAIN_SRCS = \
 	econet.cpp \
 	ethernet.cpp \
 	errorhandler.cpp \
-	platforms/rpi-gpio.cpp \
 	stations.cpp \
 	users.cpp \
-	commands/commands.cpp \
 	netfs.cpp \
+	commands/commands.cpp \
 	commands/star_cat.cpp \
 	commands/star_cdir.cpp \
 	commands/star_clock.cpp \
@@ -70,7 +69,8 @@ MAIN_SRCS = \
 	commands/star_remuser.cpp \
 	commands/star_time.cpp \
 	commands/star_users.cpp \
-	platforms/linux.cpp
+	platforms/linux.cpp \
+	platforms/rpi-gpio.cpp
 
 CLIENT_SRCS = \
 	client.cpp \
