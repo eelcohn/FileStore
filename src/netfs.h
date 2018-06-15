@@ -7,5 +7,6 @@
 namespace commands {
 	int access(char **args);
 	int i_am(char **args);
+	int clockspeed(char **args);
 }
 

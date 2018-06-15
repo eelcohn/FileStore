@@ -23,7 +23,7 @@ namespace configuration {
 	unsigned char	*volume = NULL;
 	unsigned char	*printqueue = (unsigned char *)"/usr/bin/lpr";
 	bool		clock = false;
-	unsigned int	clockspeed = 100000;
+	unsigned int	clockspeed = 30000;
 	unsigned short	dutycycle = 25;
 	unsigned int	protectionLevel;
 	unsigned char	*networkLogFile = (unsigned char *)"network.log";
@@ -88,7 +88,7 @@ namespace commands {
 			}
 		} else if (strcmp(args[1], "CLOCKSPEED") == 0) {
 			value = strtol(args[2], NULL, 10);
-			if ((value < 50000) || (value > 1000000)) {
+			if ((value < 200) || (value > 1000000)) {
 				printf("Error: %s is an invalid clock speed value\n", args[2]);
 				return(0x000000FD);
 			} else {

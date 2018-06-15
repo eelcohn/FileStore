@@ -25,7 +25,7 @@ namespace configuration {
 	unsigned char	*volume = NULL;
 	unsigned char	*printqueue = (unsigned char *)"/usr/bin/lpr";
 	bool		clock = false;
-	unsigned int	clockspeed = 100000;
+	unsigned int	clockspeed = 30000;
 	unsigned short	dutycycle = 25;
 	unsigned int	protectionLevel;
 	unsigned char	*networkLogFile = (unsigned char *)"network.log";

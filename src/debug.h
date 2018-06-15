@@ -11,6 +11,8 @@ namespace debug {
 }
 #ifdef DEBUGBUILD
 namespace debug {
+	int read(char **args);
+	int write(char **args);
 	int d(char **args);
 	int rs(char **args);
 	int rw(char **args);

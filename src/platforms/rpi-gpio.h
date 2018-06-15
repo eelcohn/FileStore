@@ -31,6 +31,8 @@
 #define CLKIN		20		//
 #define CLKIN_EN	16		//
 
+#define TMPRW	11	// Temporary debugging RW signal. Needed because of design flaw in issue 1 of the board. Remove in final build
+
 #define ADLC_RESET_PULSEWIDTH	500000	// Pulse RESET low for 500ms (minimum RESET pulse with for the 68B54 according to the datasheet is 0.40us)
 #define ADLC_BUS_SETTLE_TIME	1000	// Allow 1 ms for reads and writes to the ADLC
 #define ADLC_INTERRUPT_TIMEOUT	10	// 10ms before an pigpio interrupt times out
@@ -63,7 +65,7 @@ namespace rpi_gpio {
 	bool	networkState(void);
 	int	setClockSpeed(unsigned int clockSpeed, unsigned int dutyCycle);
 	int	getClockSpeed(void);
-	int	getClockSpeed_inthandler(void);
+	void	getClockSpeed_inthandler(int gpio, int level, unsigned int tick);
 	void	startClock(void);
 	void	stopClock(void);
 }

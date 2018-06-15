@@ -35,6 +35,26 @@ namespace debug {
 #include "platforms/platform.h"			// Included for ADLC_* definitions
 
 namespace debug {
+	int read(char **args) {
+		int reg;
+		char *end;
+
+		reg = strtol(args[1], &end, 10);
+		printf("Register %i has a value of %02X\n", reg, rpi_gpio::readRegister(reg));
+	}
+
+	int write(char **args) {
+		int reg, value;
+		char *end;
+
+		reg = strtol(args[1], &end, 10);
+		value = strtol(args[2], &end, 10);
+
+		printf("Register %i set to %02X\n", reg, value);
+		rpi_gpio::writeRegister(reg, value);
+		return(0);
+	}
+
 	int d(char **args) {
 		int dataline, value, gpio_pin;
 		char *end;
@@ -120,12 +140,15 @@ gpioSetMode(ADLC_A1, PI_OUTPUT);
 	}
 
 	int rw(char **args) {
+gpioSetMode(TMPRW, PI_OUTPUT);
 		gpioSetMode(ADLC_RW, PI_OUTPUT);
-		if (strcmp(args[1], "R") == 0)
+		if (strcmp(args[1], "R") == 0) {
+gpioWrite(TMPRW, PI_LOW);
 			gpioWrite(ADLC_RW, PI_HIGH);
-		else if (strcmp(args[1], "W") == 0)
+		} else if (strcmp(args[1], "W") == 0) {
+gpioWrite(TMPRW, PI_HIGH);
 			gpioWrite(ADLC_RW, PI_LOW);
-		else
+		} else
 			return 0x000000FE;
 
 		return(0);

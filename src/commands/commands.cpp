@@ -10,6 +10,8 @@
 
 const char *cmds[][2] = {
 #ifdef DEBUGBUILD
+	{"READ",	" <reg>"},
+	{"WRITE",	" <reg> <value>"},
 	{"D",		" <0..7> <0|1>"},
 	{"RS",		" <0..3>"},
 	{"RW",		" <R|W>"},
@@ -22,6 +24,7 @@ const char *cmds[][2] = {
 	{"CAT",		""},
 	{"CDIR",	" <dir>"},
 	{"CLOCK",	" <ON|OFF|AUTO>"},
+	{"CLOCKSPEED",	""},
 	{"CONFIGURE",	" <keyword> (value)"},
 	{"DATE",	""},
 	{"DELETE",	" <filename>"},
@@ -44,6 +47,8 @@ const char *cmds[][2] = {
 
 int (*cmds_jumptable[]) (char **) = {
 #ifdef DEBUGBUILD
+	&debug::read,
+	&debug::write,
 	&debug::d,
 	&debug::rs,
 	&debug::rw,
@@ -56,6 +61,7 @@ int (*cmds_jumptable[]) (char **) = {
 	&commands::cat,
 	&commands::cdir,
 	&commands::clock,
+	&commands::clockspeed,	
 	&commands::configure,
 	&commands::date,
 	&commands::star_delete,

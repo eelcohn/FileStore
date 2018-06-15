@@ -80,6 +80,7 @@ namespace rpi_gpio {
 		gpioSetMode(ADLC_RW, PI_OUTPUT);
 		gpioSetMode(ADLC_RST, PI_INPUT);
 		gpioSetMode(ADLC_IRQ, PI_INPUT);
+gpioSetMode(TMPRW, PI_OUTPUT);
 
 		gpioSetMode(CLKIN, PI_INPUT);
 		gpioSetMode(CLKIN_EN, PI_OUTPUT);
@@ -90,6 +91,7 @@ namespace rpi_gpio {
 		gpioWrite (ADLC_RST, PI_HIGH);			// Don't reset the beast just yet
 		gpioWrite (ADLC_CS, PI_HIGH);			// Disable ADLC for now
 		gpioWrite (ADLC_RW, PI_HIGH);			// Read
+gpioWrite (TMPRW, PI_LOW);
 		gpioWrite (ADLC_A0, PI_LOW);			// Select register 0
 		gpioWrite (ADLC_A1, PI_LOW);			// 
 
@@ -136,6 +138,7 @@ namespace rpi_gpio {
 		gpioSetMode(ADLC_RW, PI_INPUT);
 		gpioSetMode(ADLC_RST, PI_INPUT);
 		gpioSetMode(ADLC_IRQ, PI_INPUT);
+gpioSetMode(TMPRW, PI_INPUT);
 
 		gpioSetMode(CLKIN, PI_INPUT);
 		gpioSetMode(CLKIN_EN, PI_INPUT);
@@ -170,6 +173,7 @@ namespace rpi_gpio {
 	unsigned char readRegister(unsigned char reg) {
 		unsigned char result = 0x00;
 
+gpioWrite(TMPRW, PI_LOW);
 		gpioWrite(ADLC_RW, PI_HIGH);
 		if (reg & 0x01)
 			gpioWrite(ADLC_A0, PI_HIGH);
@@ -206,6 +210,7 @@ namespace rpi_gpio {
 
 	void writeRegister(unsigned char reg, unsigned char value) {
 		gpioWrite(ADLC_RW, PI_LOW);
+gpioWrite(TMPRW, PI_HIGH);
 
 		// Set address bus
 		if (reg & 0x01)
@@ -326,16 +331,21 @@ namespace rpi_gpio {
 	}
 
 	int getClockSpeed(void) {
+		int seconds = 10;
+
 		numpulses = 0;
-
-		gpioWrite(CLKIN_EN, PI_HIGH);
-		gpioSleep(PI_TIME_RELATIVE, 0, 3000000);	// Count pulses for 3 seconds
-		gpioWrite(CLKIN_EN, PI_LOW);
-
-		return (numpulses / 3);
+		if (gpioSetISRFunc(CLKIN, FALLING_EDGE, seconds * 1000, getClockSpeed_inthandler) == 0) {
+			gpioWrite(CLKIN_EN, PI_LOW);
+			gpioSleep(PI_TIME_RELATIVE, seconds, 0);	// Count pulses for 3 seconds
+			gpioWrite(CLKIN_EN, PI_HIGH);
+			gpioSetISRFunc(CLKIN, FALLING_EDGE, seconds * 1000, NULL);
+		} else {
+			return(-1);
+		}
+		return (numpulses / seconds);
 	}
 
-	int getClockSpeed_inthandler(void) {
+	void getClockSpeed_inthandler(int gpio, int level, unsigned int tick) {
 		numpulses++;
 	}
 
