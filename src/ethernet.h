@@ -11,12 +11,8 @@
 #define ETHERNET_SAUN_UDPPORT	0x8443
 
 namespace ethernet {
-	void	pollAUNNetworkReceive(void);
+	void	ipv4_Listener(void);
 	int	transmitFrame(econet::Frame *frame, int tx_length);
-	void	pollSecureAUNNetworkReceive(void);
-	int	transmitSecureAUNFrame(econet::Frame *frame, int tx_length);
-void dtls_SAUNListener (void);
+	void	ipv4_dtls_Listener (void);
 }
-
 #endif
-
