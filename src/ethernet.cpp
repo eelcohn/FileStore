@@ -65,7 +65,7 @@ static int _createSocket(int port) {
 
 namespace ethernet {
 	/* Periodically check if we've received an Econet network package */
-	void pollAUNNetworkReceive(void) {
+	void ipv4_Listener(void) {
 		int reuseconn;
 		int rx_sock;
 		int rx_length;
@@ -167,7 +167,7 @@ namespace ethernet {
 
 //#ifdef OPENSSL
 	/* Periodically check if we've received an Econet network package */
-	void dtls_SAUNListener (void) {
+	void ipv4_dtls_Listener (void) {
 		int rx_sock, client, rx_length;
 		char buf[4096];
 		struct sockaddr_in addr;

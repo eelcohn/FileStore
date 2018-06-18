@@ -16,6 +16,18 @@ namespace commands {
 		return(0);
 	}
 
+	int cat(char **args) {
+		return(0);
+	}
+
+	int cdir(char **args) {
+		return(0);
+	}
+
+	int del(char **args) {
+		return(0);
+	}
+
 	int i_am(char **args) {
 		return(0);
 	}

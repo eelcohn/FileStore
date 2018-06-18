@@ -80,10 +80,16 @@ int main(int argc, char** argv) {
 	}
 
 	/* Spawn new thread for polling hardware and processing network data */
-//	std::thread thread_EconetpollNetworkReceive(econet::pollNetworkReceive);
-	std::thread thread_EthernetpollNetworkReceive(ethernet::pollAUNNetworkReceive);
+//	std::thread thread_econet_listener(econet::pollNetworkReceive);
+	std::thread thread_ipv4_listener(ethernet::ipv4_Listener);
+#ifdef ECONET_IPV6
+	std::thread thread_ipv6_listener(ethernet::ipv6_Listener);
+#endif
 #ifdef ECONET_WITHOPENSSL
-	std::thread thread_EthernetSecureAUNListener(ethernet::dtls_SAUNListener);
+	std::thread thread_ipv4_dtls_listener(ethernet::ipv4_dtls_listener);
+#ifdef ECONET_IPV6
+	std::thread thread_ipv6_dtls_listener(ethernet::ipv6_dtls_Listener);
+#endif
 #endif
 
 	/* Announce that a new Econet bridge is online on the network */
@@ -142,10 +148,16 @@ int main(int argc, char** argv) {
 	printf("\n");
 
 	/* Wait for the threads to finish */
-//	thread_EconetpollNetworkReceive.join();
-	thread_EthernetpollNetworkReceive.join();
+//	thread_econet_listener.join();
+	thread_ipv4_listener.join();
+#ifdef ECONET_IPV6
+	thread_ipv6_listener.join();
+#endif
 #ifdef ECONET_WITHOPENSSL
-	thread_EthernetSecureAUNListener.join();
+	thread_ipv4_dtls_listener.join();
+#ifdef ECONET_IPV6
+	thread_ipv6_dtls_listener.join();
+#endif
 #endif
 
 	/* Dismount all open disc images */
