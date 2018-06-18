@@ -6,7 +6,9 @@
 
 namespace commands {
 	int access(char **args);
+	int cat(char **args);
+	int cdir(char **args);
+	int del(char **args);
 	int i_am(char **args);
 	int clockspeed(char **args);
 }
-
