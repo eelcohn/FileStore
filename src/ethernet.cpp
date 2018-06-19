@@ -94,21 +94,21 @@ namespace ethernet {
 		}
 	}
 
-	int transmitFrame(econet::Frame *frame, int tx_length) {
+	int transmitFrame(char *address, unsigned short port, econet::Frame *frame, int tx_length) {
 		struct sockaddr_in addr_outgoing;
 		int tx_sock, slen = sizeof(addr_outgoing);
  
 		if ((tx_sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
-			fprintf(stderr, "socket() failed\n");
+			fprintf(stderr, "ethernet::transmitFrame: socket() failed\n");
 			return(-1);
 		}
  
 		memset((char *) &addr_outgoing, 0, sizeof(addr_outgoing));
 		addr_outgoing.sin_family	= AF_INET;
-		addr_outgoing.sin_port		= htons(ETHERNET_AUN_UDPPORT);
+		addr_outgoing.sin_port		= htons(port);
      
-		if (inet_aton("127.0.0.1", &addr_outgoing.sin_addr) == 0) {
-			fprintf(stderr, "inet_aton() failed\n");
+		if (inet_aton(address, &addr_outgoing.sin_addr) == 0) {
+			fprintf(stderr, "ethernet::transmitFrame: invalid IPv4 address\n");
 			return(-2);
 		}
 
@@ -116,7 +116,7 @@ namespace ethernet {
 			commands::netmonPrintFrame("eth", true, frame, tx_length);
 
 		if (sendto(tx_sock, (char *) &frame, sizeof(frame), 0, (struct sockaddr *) &addr_outgoing, slen) == -1) {
-			fprintf(stderr, "sendto() failed\n");
+			fprintf(stderr, "ethernet::transmitFrame: sendto() failed\n");
 			return(-3);
 		}
 //		close(tx_sock);
@@ -135,7 +135,7 @@ namespace ethernet {
 		dtls_Begin();
 
 		// Create the server UDP listener socket
-		rx_sock = _createSocket(ETHERNET_SAUN_UDPPORT);
+		rx_sock = _createSocket(AF_INET, NULL, ETHERNET_SAUN_UDPPORT);
 
 		// Initialize the DTLS context from the keystore and then create the server SSL state.
 		if (dtls_InitContextFromKeystore(&server, "server") < 0) {
