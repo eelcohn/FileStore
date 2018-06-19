@@ -11,6 +11,7 @@
 #define ETHERNET_SAUN_UDPPORT	0x8443
 
 namespace ethernet {
+	static int	_createSocket(int family, char *address, unsigned short port);
 	void	ipv4_Listener(void);
 	int	transmitFrame(econet::Frame *frame, int tx_length);
 	void	ipv4_dtls_Listener (void);
