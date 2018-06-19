@@ -23,17 +23,18 @@ int	string = -1;
 
 int main(int argc, char** argv) {
 	int i;
+	size_t numRead;
 	char *buffer;
 	FILE *fp;
 
 	/* Analyse command line parameters */
 	for (i = 0; i < argc; i++) {
-		if (strcmp(argv[i], "--help")) {
+		if (strcmp(argv[i], "--help") == 0) {
 			printf("%s", helpstring);
 			exit(0);
 		}
 
-		if ((strcmp(argv[i], "-h")) || (strcmp(argv[i], "--host"))) {
+		if ((strcmp(argv[i], "-h") == 0) || (strcmp(argv[i], "--host") == 0)) {
 			if (i++ != argc)
 				host = i;
 			else {
@@ -42,7 +43,7 @@ int main(int argc, char** argv) {
 			}
 		}
 		
-		if ((strcmp(argv[i], "-f")) || (strcmp(argv[i], "--file"))) {
+		if ((strcmp(argv[i], "-f") == 0) || (strcmp(argv[i], "--file") == 0)) {
 			if (i++ != argc)
 				file = i;
 			else {
@@ -51,7 +52,7 @@ int main(int argc, char** argv) {
 			}
 		}
 
-		if ((strcmp(argv[i], "-x")) || (strcmp(argv[i], "--hex"))) {
+		if ((strcmp(argv[i], "-x") == 0) || (strcmp(argv[i], "--hex") == 0)) {
 			if (i++ != argc)
 				hex = i;
 			else {
@@ -60,7 +61,7 @@ int main(int argc, char** argv) {
 			}
 		}
 
-		if ((strcmp(argv[i], "-s")) || (strcmp(argv[i], "--string"))) {
+		if ((strcmp(argv[i], "-s") == 0) || (strcmp(argv[i], "--string") == 0)) {
 			if (i++ != argc)
 				string = i;
 			else {
@@ -69,7 +70,7 @@ int main(int argc, char** argv) {
 			}
 		}
 
-		if ((strcmp(argv[i], "-4")) || (strcmp(argv[i], "--ipv4")))
+		if ((strcmp(argv[i], "-4") == 0) || (strcmp(argv[i], "--ipv4") == 0))
 			ipv4 = true;
 
 		if ((strcmp(argv[i], "-6")) || (strcmp(argv[i], "--ipv6")))
@@ -103,11 +104,12 @@ int main(int argc, char** argv) {
 		// Read the contents of the file (up to 4KB) into a buffer
 		fp = fopen(argv[file], "rb");
 		buffer = (char *)malloc(4096);
-		size_t numRead = fread(buffer, 1, 4096, fp);
+		numRead = fread(buffer, 1, 4096, fp);
 	}
 
 	if (string != -1) {
 		char *buffer = argv[string];
+		numRead = strlen(argv[string]);
 	}
 
 	// Write the buffer to the server

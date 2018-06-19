@@ -120,7 +120,7 @@ namespace ethernet {
 		return(0);
 	}
 
-//#ifdef OPENSSL
+#ifdef ECONET_WITHOPENSSL
 	/* Periodically check if we've received an Econet network package */
 	void ipv4_dtls_Listener (void) {
 		int rx_sock, client, rx_length;
@@ -182,6 +182,6 @@ namespace ethernet {
 		// Teardown the link and context state.
 		dtls_Shutdown(&server);
 	}
-//#endif
+#endif
 }
 

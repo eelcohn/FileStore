@@ -32,4 +32,5 @@ echo "#define DEBUGBUILD	1"		> config.h
 echo "#define REMA1		1"		>> config.h
 echo "#define ECONET_ECOIF	\"REMA1\""		>> config.h
 echo "#define CPUTYPE		${CPUTYPE}"	>> config.h
+echo "#define ECONET_WITHOPENSSL"			>> config.h
 

@@ -136,8 +136,8 @@ int dtls_InitContextFromKeystore(DTLSParams* params, const char* keyname) {
 	// Load key and certificate
 	char certfile[1024];
 	char keyfile[1024];
-	sprintf(certfile, "./%s-cert.pem", keyname);
-	sprintf(keyfile, "./%s-key.pem", keyname);
+	sprintf(certfile, "./conf/keys/%s.cert", keyname);
+	sprintf(keyfile, "./conf/keys/%s.key", keyname);
 
 	// Load the certificate file; contains also the public key
 	result = SSL_CTX_use_certificate_file(params->ctx, certfile, SSL_FILETYPE_PEM);

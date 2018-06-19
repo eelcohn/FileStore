@@ -86,12 +86,11 @@ int main(int argc, char** argv) {
 	std::thread thread_ipv6_listener(ethernet::ipv6_Listener);
 #endif
 #ifdef ECONET_WITHOPENSSL
-	std::thread thread_ipv4_dtls_listener(ethernet::ipv4_dtls_listener);
+	std::thread thread_ipv4_dtls_listener(ethernet::ipv4_dtls_Listener);
 #ifdef ECONET_IPV6
 	std::thread thread_ipv6_dtls_listener(ethernet::ipv6_dtls_Listener);
 #endif
 #endif
-
 	/* Announce that a new Econet bridge is online on the network */
 	econet::sendBridgeAnnounce();
 
