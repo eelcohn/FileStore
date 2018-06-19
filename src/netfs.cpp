@@ -4,7 +4,7 @@
  * (c) Eelco Huininga 2017-2018
  */
 
-#include <cstdio>		// ptinf()
+#include <cstdio>		// prinf()
 #include "platforms/platform.h"
 
 using namespace std;

@@ -7,7 +7,7 @@
 #ifdef __GNUC__
 #include "linux.h"
 #endif
-#ifndef ECONET_ECOIF
+#ifdef ECONET_ECOIF
 #include "rpi-gpio.h"
 #endif
 
