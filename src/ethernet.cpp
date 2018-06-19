@@ -19,19 +19,43 @@
 
 using namespace std;
 
-static int _createSocket(int port) {
+
+
+static int _createSocket(int family, char *address, unsigned short port) {
 	int sock;
 	int reuseconn;
 	struct timeval timeout;
-	struct sockaddr_in addr;
 
-	addr.sin_family = AF_INET;
-	addr.sin_port = htons(port);
-	addr.sin_addr.s_addr = htonl(INADDR_ANY);
+	switch (family) {
+		case AF_INET :
+			struct sockaddr_in addr;
 
-	if ((sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
-//	sock = socket(AF_INET, SOCK_STREAM, 0);
-//	if (sock < 0) {
+			addr.sin_family = AF_INET;
+			addr.sin_port = htons(port);
+			if (address == NULL)
+				addr.sin_addr.s_addr = htonl(INADDR_ANY);
+			else
+				inet_pton(AF_INET, address, (void *)&addr.sin_addr.s_addr);
+			break;
+
+		case AF_INET6 :
+			struct sockaddr_in6 addr;
+
+			addr.sin6_family = AF_INET6;
+			addr.sin6_port = htons(port);
+			addr.sin6_scope_id = 0;
+			if (address == NULL)
+				addr.sin6_addr.s_addr = htonl(IN6ADDR_ANY);
+			else
+				inet_pton(AF_INET6, address, (void *)&addr.sin6_addr.s_addr);
+			break;
+
+		default :
+			perror("_createSocket: unknown family");
+			exit(EXIT_FAILURE);
+	}
+
+	if ((sock = socket(family, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
 		perror("Unable to create socket");
 		exit(EXIT_FAILURE);
 	}
