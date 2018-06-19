@@ -15,12 +15,13 @@ typedef struct {
 	BIO *bio;
 } DTLSParams;
 
-void dtls_Begin();
-void dtls_End();
-void dtls_Shutdown(DTLSParams* k);
-int dtls_InitContextFromKeystore(DTLSParams* k, const char* keyname);
-int dtls_InitServer(DTLSParams* k);
-int dtls_InitClient(DTLSParams* k, const char *address);
+static int	_createSocket(int family, char *address, unsigned short port);
+void		dtls_Begin();
+void		dtls_End();
+void		dtls_Shutdown(DTLSParams* k);
+int		dtls_InitContextFromKeystore(DTLSParams* k, const char* keyname);
+int		dtls_InitServer(DTLSParams* k);
+int		dtls_InitClient(DTLSParams* k, const char *address);
 
 #endif // dtls_h_
 
