@@ -4,6 +4,9 @@
  * (c) Eelco Huininga 2017-2018
  */
 
+#ifndef ECONET_NETFS_HEADER
+#define ECONET_NETFS_HEADER
+
 namespace commands {
 	int access(char **args);
 	int cat(char **args);
@@ -12,3 +15,5 @@ namespace commands {
 	int i_am(char **args);
 	int clockspeed(char **args);
 }
+#endif
+

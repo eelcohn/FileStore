@@ -51,7 +51,7 @@ namespace econet {
 //						econet::transmitFrame((econet::Frame *) &frame, rx_length);
 //					} else {
 						/* Relay frame to other known network(s) */
-						ethernet::transmitFrame((econet::Frame *) &frame, rx_length);
+						ethernet::transmitFrame(NULL, ETHERNET_AUN_UDPPORT, (econet::Frame *) &frame, rx_length);
 //					}
 				}
 			}
@@ -529,9 +529,9 @@ namespace econet {
 		frame.data[0x03]	= configuration::ethernet_station;
 		frame.data[0x06]	= configuration::econet_network;
 
-		ethernet::transmitFrame(&frame, sizeof(ECONET_BROADCAST_NEWBRIDGE));
+		ethernet::transmitFrame(NULL, ETHERNET_AUN_UDPPORT, &frame, sizeof(ECONET_BROADCAST_NEWBRIDGE));
 	#ifdef OPENSSL
-		ethernet::transmitSecureAUNFrame(&frame, sizeof(ECONET_BROADCAST_NEWBRIDGE));
+		ethernet::transmitSecureAUNFrame(NULL, ETHERNET_SAUN_UDPPORT, &frame, sizeof(ECONET_BROADCAST_NEWBRIDGE));
 	#endif
 	}
 
@@ -548,9 +548,9 @@ namespace econet {
 		frame.data[0x02]	= configuration::ethernet_network;
 		frame.data[0x03]	= configuration::ethernet_station;
 
-		ethernet::transmitFrame(&frame, sizeof(ECONET_BROADCAST_WHATNET));
+		ethernet::transmitFrame(NULL, ETHERNET_AUN_UDPPORT, &frame, sizeof(ECONET_BROADCAST_WHATNET));
 	#ifdef OPENSSL
-		ethernet::transmitSecureAUNFrame(&frame, sizeof(ECONET_BROADCAST_WHATNET));
+		ethernet::transmitSecureAUNFrame(NULL, ETHERNET_SAUN_UDPPORT, &frame, sizeof(ECONET_BROADCAST_WHATNET));
 	#endif
 	}
 

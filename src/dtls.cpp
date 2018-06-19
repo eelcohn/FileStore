@@ -7,7 +7,7 @@
 #include "dtls.h"
 
 /* Create a new socket */
-static int _createSocket(int family, char *address, unsigned short port) {
+int _createSocket(int family, char *address, unsigned short port) {
 	int sock;
 	int reuseconn;
 	struct timeval timeout;
@@ -96,7 +96,6 @@ void dtls_Begin() {
 }
 
 void dtls_End() {
-	ERR_remove_thread_state(NULL);
 	ENGINE_cleanup();
 	CONF_modules_unload(1);
 	ERR_free_strings();
@@ -113,7 +112,10 @@ int dtls_InitContextFromKeystore(DTLSParams* params, const char* keyname) {
 	int result = 0;
 
 	// Create a new context using DTLS
-	params->ctx = SSL_CTX_new(DTLSv1_2_method());
+	params->ctx = SSL_CTX_new(DTLS_method());
+	if (SSL_CTX_set_min_proto_version(params->ctx, DTLS1_2_VERSION) != 1) {
+		printf("Warning: dtls_InitContextFromKeystore: cannot set minimum supported protocol version\n");
+	} 
 	if (params->ctx == NULL) {
 		printf("Error: cannot create SSL_CTX.\n");
 		ERR_print_errors_fp(stderr);

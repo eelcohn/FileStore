@@ -41,6 +41,8 @@ namespace debug {
 
 		reg = strtol(args[1], &end, 10);
 		printf("Register %i has a value of %02X\n", reg, rpi_gpio::readRegister(reg));
+
+		return(0);
 	}
 
 	int write(char **args) {
@@ -52,6 +54,7 @@ namespace debug {
 
 		printf("Register %i set to %02X\n", reg, value);
 		rpi_gpio::writeRegister(reg, value);
+
 		return(0);
 	}
 

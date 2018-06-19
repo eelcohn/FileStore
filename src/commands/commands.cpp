@@ -64,7 +64,7 @@ int (*cmds_jumptable[]) (char **) = {
 	&commands::clockspeed,	
 	&commands::configure,
 	&commands::date,
-	&commands::star_delete,
+	&commands::del,
 	&commands::discs,
 	&commands::dismount,
 	&commands::exit,

@@ -6,6 +6,11 @@ if [ ! -d /usr/include/openssl/ ] || [[ ! $(ldconfig -p | grep libssl) ]]; then
 	exit -1
 fi
 
+if [[ ! $(openssl version | grep 1.1.0) ]]; then
+	echo OpenSSL version 1.1.0 or above required
+	exit -1
+fi
+
 if [ ! -f /usr/include/curses.h ] || [[ ! $(ldconfig -p | grep libncurses) ]]; then
 	echo Please install libncurses
 	exit -1
@@ -25,6 +30,6 @@ fi
 
 echo "#define DEBUGBUILD	1"		> config.h
 echo "#define REMA1		1"		>> config.h
-echo "#define ECONET_ECOIF	REMA1"		>> config.h
+echo "#define ECONET_ECOIF	\"REMA1\""		>> config.h
 echo "#define CPUTYPE		${CPUTYPE}"	>> config.h
 

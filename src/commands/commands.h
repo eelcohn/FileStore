@@ -10,12 +10,9 @@
 #include "../platforms/platform.h"                    // High level API calls to Econet
 
 #include "../netfs.h"
-#include "star_cat.h"
-#include "star_cdir.h"
 #include "star_clock.h"
 #include "star_configure.h"
 #include "star_date.h"
-#include "star_delete.h"
 #include "star_discs.h"
 #include "star_dismount.h"
 #include "star_exit.h"

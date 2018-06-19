@@ -49,12 +49,9 @@ MAIN_SRCS = \
 	users.cpp \
 	netfs.cpp \
 	commands/commands.cpp \
-	commands/star_cat.cpp \
-	commands/star_cdir.cpp \
 	commands/star_clock.cpp \
 	commands/star_configure.cpp \
 	commands/star_date.cpp \
-	commands/star_delete.cpp \
 	commands/star_discs.cpp \
 	commands/star_dismount.cpp \
 	commands/star_exit.cpp \
