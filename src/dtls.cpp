@@ -3,6 +3,80 @@
 
 #include "dtls.h"
 
+/* Create a new socket */
+static int _createSocket(int family, char *address, unsigned short port) {
+	int sock;
+	int reuseconn;
+	struct timeval timeout;
+
+	switch (family) {
+		case AF_INET :
+			struct sockaddr_in addr;
+
+			addr.sin_family = AF_INET;
+			addr.sin_port = htons(port);
+			if (address == NULL)
+				addr.sin_addr.s_addr = htonl(INADDR_ANY);
+			else {
+				if (inet_pton(AF_INET, address, (void *)&addr.sin_addr.s_addr) != 1) {
+					perror("_createSocket: Invalid IPv4 address");
+					exit(EXIT_FAILURE);
+				}
+			}
+			break;
+
+		case AF_INET6 :
+			struct sockaddr_in6 addr;
+
+			addr.sin6_family = AF_INET6;
+			addr.sin6_port = htons(port);
+			addr.sin6_scope_id = 0;
+			if (address == NULL)
+				addr.sin6_addr.s_addr = htonl(IN6ADDR_ANY);
+			else {
+				if (inet_pton(AF_INET6, address, (void *)&addr.sin6_addr.s_addr) != 1) {
+					perror("_createSocket: Invalid IPv6 address");
+					exit(EXIT_FAILURE);
+				}
+			}
+			break;
+
+		default :
+			perror("_createSocket: unknown family");
+			exit(EXIT_FAILURE);
+	}
+
+	if ((sock = socket(family, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
+		perror("_createSocket: Unable to create socket");
+		exit(EXIT_FAILURE);
+	}
+
+	/* Set socket to allow multiple connections */
+	reuseconn = 1;
+	if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char *)&reuseconn, sizeof(reuseconn)) == -1) {
+		perror("_createSocket: setsockopt(SO_REUSEADDR)");
+	}
+
+	/* Set timeout on socket to prevent recvfrom from blocking execution */
+	timeout.tv_sec = 0;
+	timeout.tv_usec = 100000;
+	if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) < 0) {
+		perror("_createSocket: Error setting timeout on socket");
+	}
+
+	if (bind(sock, (struct sockaddr*) &addr, sizeof(addr)) < 0) {
+		perror("_createSocket: Unable to bind");
+		exit(EXIT_FAILURE);
+	}
+
+//	if (listen(sock, 1) < 0) {
+//		perror("Unable to listen");
+//		exit(EXIT_FAILURE);
+//	}
+
+	return sock;
+}
+
 void dtls_Begin() {
 	SSL_library_init();
 	SSL_load_error_strings();
@@ -79,63 +153,54 @@ int dtls_InitContextFromKeystore(DTLSParams* params, const char* keyname) {
 	return 0;
 }
 
-int
-dtls_InitClient(DTLSParams* params, const char *address)
-{
-    params->bio = BIO_new_ssl_connect(params->ctx);
-    if (params->bio == NULL) {
-        fprintf(stderr, "error connecting to server\n");
-        return -1;
-    }
+int dtls_InitClient(DTLSParams* params, const char *address) {
+	params->bio = BIO_new_ssl_connect(params->ctx);
+	if (params->bio == NULL) {
+		fprintf(stderr, "error connecting to server\n");
+		return -1;
+	}
 
-    BIO_set_conn_hostname(params->bio, address);
-    BIO_get_ssl(params->bio, &(params->ssl));
-    if (params->ssl == NULL) {
-        fprintf(stderr, "error, exit\n");
-        return -1;
-    }
+	BIO_set_conn_hostname(params->bio, address);
+	BIO_get_ssl(params->bio, &(params->ssl));
+	if (params->ssl == NULL) {
+		fprintf(stderr, "error, exit\n");
+		return -1;
+	}
 
-    SSL_set_connect_state(params->ssl);
-    SSL_set_mode(params->ssl, SSL_MODE_AUTO_RETRY);
+	SSL_set_connect_state(params->ssl);
+	SSL_set_mode(params->ssl, SSL_MODE_AUTO_RETRY);
 
-    return 0;
+	return 0;
 }
 
-int
-dtls_InitServer(DTLSParams* params)
-{
-    params->bio = BIO_new_ssl_connect(params->ctx);
-    if (params->bio == NULL) {
-        fprintf(stderr, "error connecting with BIOs\n");
-        return -1;
-    }
+int dtls_InitServer(DTLSParams* params) {
+	params->bio = BIO_new_ssl_connect(params->ctx);
+	if (params->bio == NULL) {
+		fprintf(stderr, "error connecting with BIOs\n");
+		return -1;
+	}
 
-    BIO_get_ssl(params->bio, &(params->ssl));
-    if (params->ssl == NULL) {
-        fprintf(stderr, "error, exit\n");
-        return -1;
-    }
+	BIO_get_ssl(params->bio, &(params->ssl));
+	if (params->ssl == NULL) {
+		fprintf(stderr, "error, exit\n");
+		return -1;
+	}
 
-    SSL_set_accept_state(params->ssl);
+	SSL_set_accept_state(params->ssl);
 
-    return 0;
+	return 0;
 }
 
-void
-dtls_Shutdown(DTLSParams* params)
-{
-    if (params == NULL) {
-        return;
-    }
+void dtls_Shutdown(DTLSParams* params) {
+	if (params != NULL) {
+		if (params->ctx != NULL) {
+			SSL_CTX_free(params->ctx);
+			params->ctx = NULL;
+		}
 
-    if (params->ctx != NULL) {
-        SSL_CTX_free(params->ctx);
-        params->ctx = NULL;
-    }
-
-    if (params->ssl != NULL) {
-        SSL_free(params->ssl);
-        params->ssl = NULL;
-    }
+		if (params->ssl != NULL) {
+			SSL_free(params->ssl);
+			params->ssl = NULL;
+		}
+	}
 }
-
