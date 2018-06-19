@@ -6,9 +6,6 @@
 
 #include <cstring>			// Included for memset() and memcpy()
 #include <unistd.h>			// Included for close()
-#include <sys/socket.h>			// Included for SO_RCVTIMEO
-#include <netinet/in.h>			// Included for IPPROTO_UDP
-#include <arpa/inet.h>			// Included for inet_aton()
 
 #include "settings.h"			// Global configuration variables are defined here
 #include "dtls.h"

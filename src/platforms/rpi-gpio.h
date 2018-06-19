@@ -9,7 +9,8 @@
 #define ECONET_GPIO_HEADER
 
 #include "../econet.h"			// Included for Econet::frame
-#include <pigpio.h>
+//#include <pigpio.h>
+#include "../pigpio/pigpio.h"
 
 #define ADLC_D0		17		//
 #define ADLC_D1		18		//
@@ -51,7 +52,7 @@ namespace api {
 	int	getClockSpeed(void);
 	void	startClock(void);
 	void	stopClock(void);
-}
+};
 
 namespace rpi_gpio {
 	int	resetADLC(void);
