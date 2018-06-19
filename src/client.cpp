@@ -23,6 +23,7 @@ int	string = -1;
 
 int main(int argc, char** argv) {
 	int i;
+	char *buffer;
 	FILE *fp;
 
 	/* Analyse command line parameters */
@@ -101,12 +102,12 @@ int main(int argc, char** argv) {
 	if (file != -1) {
 		// Read the contents of the file (up to 4KB) into a buffer
 		fp = fopen(argv[file], "rb");
-		unsigned char buffer[4096] = { 0 };
+		buffer = (char *)malloc(4096);
 		size_t numRead = fread(buffer, 1, 4096, fp);
 	}
 
 	if (string != -1) {
-		unsigned char *buffer = argv[string];
+		char *buffer = argv[string];
 	}
 
 	// Write the buffer to the server
@@ -132,26 +133,4 @@ int main(int argc, char** argv) {
 	// Teardown the link and context state.
 	dtls_Shutdown(&client);
 }
-
-
-const char *helpstring = "Usage: client [OPTION...] [PARAMETER]...\n\
-Client application for testing AUN (Econet over IP) based connections.\n\
-\n\
-Examples:\n\
-  client --host 127.0.0.1 --file econet.bin   # Transmit the contents of\n\
-                                                econet.bin to 127.0.0.1\n\
-  client --host acorn.co.uk --hex ffff0010    # Transmit 4 bytes (ff:ff:00:10)\n\
-                                                to acorn.co.uk.\n\
-\n\
- Parameters:\n\
-\n\
-  -f, --file <filename>             transmit contents of file\n\
-  -h, --host <ip|hostname(:port)>   specify ip or hostname to connect to\n\
-  -x, --hex                         transmit hex bytes\n\
-  -s, --string                      transmit ASCII string\n\
-  -d, --dtls                        encrypt the connection using DTLS\n\
-  -4, --ipv4                        use ipv4\n\
-  -6, --ipv6                        use ipv6\n\
-      --help                        show help message\n\
-";
 
