@@ -14,10 +14,7 @@ bool	help = false;
 bool	dtls = false;
 bool	ipv4 = false;
 bool	ipv6 = false;
-int	file = -1;
 int	host = -1;
-int	hex = -1;
-int	string = -1;
 
 
 
@@ -44,8 +41,15 @@ int main(int argc, char** argv) {
 		}
 		
 		if ((strcmp(argv[i], "-f") == 0) || (strcmp(argv[i], "--file") == 0)) {
-			if (i++ != argc)
-				file = i;
+			if (++i != argc)
+				// Read the contents of the file (up to 4KB) into a buffer
+				if (fp = fopen(argv[i], "rb") != NULL) {
+					buffer = (char *)malloc(4096);
+					numRead = fread(buffer, 1, 4096, fp);
+				} else {
+					printf("--file: file not found\n");
+					exit(-1);
+				}
 			else {
 				printf("--file: no parameter specified\n");
 				exit(1);
@@ -53,8 +57,11 @@ int main(int argc, char** argv) {
 		}
 
 		if ((strcmp(argv[i], "-x") == 0) || (strcmp(argv[i], "--hex") == 0)) {
-			if (i++ != argc)
-				hex = i;
+			if (++i != argc)
+				buffer = (char *)malloc(4096);
+				for (j = 0; j < (strlen(argv[i]) / 2); j++) {
+					sscanf(hexstring + 2*j, "%02x", &buffer[j]);
+				}
 			else {
 				printf("--hex: no parameter specified\n");
 				exit(1);
@@ -62,8 +69,9 @@ int main(int argc, char** argv) {
 		}
 
 		if ((strcmp(argv[i], "-s") == 0) || (strcmp(argv[i], "--string") == 0)) {
-			if (i++ != argc)
-				string = i;
+			if (++i != argc)
+				char *buffer = argv[i];
+				numRead = strlen(argv[i]);
 			else {
 				printf("--string: no parameter specified\n");
 				exit(1);
@@ -80,10 +88,17 @@ int main(int argc, char** argv) {
 			dtls = true;
 	}
 
+	if (dtls)
+		dtls_connect();
+	else
+		udp_connect(AF_INET, argv[host], 32768);
+}
+
+void dtls_connect(void) {
+	DTLSParams client;
+
 	/* Initialize whatever OpenSSL state is necessary to execute the DTLS protocol. */
 	dtls_Begin();
-
-	DTLSParams client;
 
 	/* Initialize the DTLS context from the keystore and then create the server SSL state */
 	if (dtls_InitContextFromKeystore(&client, "client") < 0) {
@@ -98,18 +113,6 @@ int main(int argc, char** argv) {
 	if (result != 1) {
 		perror("Unable to connect to the DTLS server.\n");
 		exit(EXIT_FAILURE);
-	}
-
-	if (file != -1) {
-		// Read the contents of the file (up to 4KB) into a buffer
-		fp = fopen(argv[file], "rb");
-		buffer = (char *)malloc(4096);
-		numRead = fread(buffer, 1, 4096, fp);
-	}
-
-	if (string != -1) {
-		char *buffer = argv[string];
-		numRead = strlen(argv[string]);
 	}
 
 	// Write the buffer to the server
@@ -136,3 +139,12 @@ int main(int argc, char** argv) {
 	dtls_Shutdown(&client);
 }
 
+void udp_connect(int family, char *address, unsigned short port) {
+	int socket;
+	struct sockaddr_in addr;
+
+	socket = _createSocket(family, address, port);
+
+	if (sendto(socket, buffer, strlen(buffer)+1, 0, (struct sockaddr *)&
+	
+}
