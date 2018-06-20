@@ -4,6 +4,7 @@ echo
 cd src
 make clean
 ./configure
+[ $? -eq 0 ] || exit $?
 make
 cd ..
 
