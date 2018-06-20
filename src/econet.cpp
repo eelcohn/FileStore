@@ -8,11 +8,11 @@
 #include <cstring>			// Included for memcpy(), strlen()
 #include <ctime>			// Included for time(), tm
 
+#include "main.h"			// Included for bye variable
 #include "platforms/platform.h"		// All high-level API calls
 #include "settings.h"			// Global configuration variables are defined here
 #include "econet.h"			// Header file for this code
 #include "ethernet.h"			// Included for ethernet::transmitFrame()
-#include "main.h"			// Included for bye variable
 #include "commands/commands.h"		// Included for commands::netmonPrintFrame()
 
 using namespace std;
@@ -74,15 +74,6 @@ namespace econet {
 			frame->status |= ECONET_FRAME_SCOUT;
 		if (size > 4)
 			frame->status |= ECONET_FRAME_DATA;
-		if ((frame->dst_network | frame->dst_station) == 0xFF)
-			frame->status |= ECONET_FRAME_BROADCAST;
-		if ((frame->dst_network == configuration::econet_network) || (frame->dst_network == 0x00)) {
-			frame->status |= ECONET_FRAME_TOLOCAL;
-			if (frame->dst_station == configuration::econet_station) {
-				frame->status |= ECONET_FRAME_TOME;
-			}
-		}
-
 		if (frame->status || ECONET_FRAME_INVALID) {
 			return false;
 		} else {
@@ -91,6 +82,15 @@ namespace econet {
 			frame->src_network = frame->data[2];
 			frame->src_station = frame->data[3];
 			frame->port = frame->data[4];
+			if ((frame->dst_network | frame->dst_station) == 0xFF)
+				frame->status |= ECONET_FRAME_BROADCAST;
+			if ((frame->dst_network == configuration::econet_network) || (frame->dst_network == 0x00)) {
+				frame->status |= ECONET_FRAME_TOLOCAL;
+			if (frame->dst_station == configuration::econet_station) {
+				frame->status |= ECONET_FRAME_TOME;
+			}
+		}
+
 			if (econet::hasSession(frame->src_network, frame->src_station, frame->port) == false) {
 				/* New session */
 				frame->control = frame->data[4];

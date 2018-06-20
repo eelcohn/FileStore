@@ -43,6 +43,7 @@ char	**tokenizeCommandLine(char *line);
 void	executeCommand(char **args);
 int	totalNumOfCommands(void);
 void	sendBridgeAnnounce(void);
+char *	strtoupper(char *s);
 
 #endif
 

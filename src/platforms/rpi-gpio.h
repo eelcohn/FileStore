@@ -9,8 +9,14 @@
 #define ECONET_GPIO_HEADER
 
 #include "../econet.h"			// Included for Econet::frame
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wcomment"
+//#pragma GCC system_header
 //#include <pigpio.h>
 #include "../pigpio/pigpio.h"
+#pragma GCC diagnostic pop
+#endif
 
 #define ADLC_D0		17		//
 #define ADLC_D1		18		//

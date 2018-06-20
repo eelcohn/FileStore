@@ -2,11 +2,11 @@
 *| !Boot script for Econet FileStore
 *|
 
-*CONFIGURE PRINTQUEUE /usr/bin/lpr
-*CONFIGURE NETWORK 112
-*CONFIGURE STATION 254
-*CONFIGURE ECONET_SUBNET 192.168.112/24
-*|CONFIGURE CLOCKSPEED 96000
-*CONFIGURE DUTYCYCLE 25%
-*CLOCK ON
+*Configure PrintQueue /usr/bin/lpr
+*Configure Network 112
+*Configure Station 254
+*Configure Econet_Subnet 192.168.112/24
+*|Configure Clockspeed 96000
+*Configure DutyCycle 25%
+*Clock On
 

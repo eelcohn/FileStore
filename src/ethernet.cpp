@@ -25,6 +25,7 @@ namespace ethernet {
 		int rx_sock;
 		int rx_length;
 		econet::Frame frame;
+		bool valid;
 
 		struct sockaddr_in addr_me, addr_incoming;
 		struct timeval timeout;
@@ -58,14 +59,15 @@ namespace ethernet {
 			perror("Error on bind");
 		}
 
-		printf("- Listener started on %s:%i\n", inet_ntoa(addr_me.sin_addr), ETHERNET_AUN_UDPPORT); 
+		printf("- Listening for UDP connections on %s:%i\n", inet_ntoa(addr_me.sin_addr), ETHERNET_AUN_UDPPORT); 
 		fflush(stdout);
 		while (bye == false) {
 			if ((rx_length = recvfrom(rx_sock, (econet::Frame *) &frame, sizeof(econet::Frame), 0, (struct sockaddr *) &addr_incoming, &slen)) > 0) {
+				valid = econet::validateFrame(&frame, rx_length);
 				if (econet::netmon == true) {
 					commands::netmonPrintFrame("eth", false, &frame, rx_length);
 				}
-				if (econet::validateFrame(&frame, rx_length)) {
+				if (valid) {
 					if (frame.status || ECONET_FRAME_TOLOCAL) {
 						/* Frame is addressed to a station on our local network */
 						if (frame.status || ECONET_FRAME_TOME) {
@@ -146,7 +148,7 @@ namespace ethernet {
 			exit(EXIT_FAILURE);
 		}
 
-		printf("- Listener started on %s:%i\n", "[::]", ETHERNET_SAUN_UDPPORT);
+		printf("- Listening for DTLS connections on %s:%i\n", "0.0.0.0", ETHERNET_SAUN_UDPPORT);
 		// Loop forever accepting messages from the client, printing their messages, and then terminating their connections
 		while (bye == false) {
 			uint len = sizeof(addr);
@@ -187,26 +189,27 @@ namespace ethernet {
 		// Teardown the link and context state.
 		dtls_Shutdown(&server);
 
-		printf("- Listener stopped on %s:%i\n", "[::]", ETHERNET_SAUN_UDPPORT);
+		printf("- Listener stopped on %s:%i\n", "0.0.0.0", ETHERNET_SAUN_UDPPORT);
 	}
 
 	int transmit_dtlsFrame(char *address, unsigned short port, econet::Frame *frame, int tx_length) {
 		return(0);
 	}
 #endif
-//#ifdef ECONET_WITHIPV6
-#ifdef HAVE_INET6_DEFINES
+#ifdef ECONET_WITHIPV6
+	char straddr[INET6_ADDRSTRLEN];
+
 	/* Periodically check if we've received an Econet network package */
 	void ipv6_Listener(void) {
 		int reuseconn;
 		int rx_sock;
 		int rx_length;
 		econet::Frame frame;
+		bool valid;
 
 		struct sockaddr_in6 addr_me, addr_incoming;
 		struct timeval timeout;
 		socklen_t slen = sizeof(addr_incoming);
-		char straddr[INET6_ADDRSTRLEN];
 
 		if ((rx_sock = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
 			perror("socket() failed");
@@ -229,21 +232,22 @@ namespace ethernet {
 		memset((char *) &addr_me, 0, sizeof(addr_me));
 		addr_me.sin6_family	= AF_INET6;
 		addr_me.sin6_port	= htons(ETHERNET_AUN_UDPPORT);
-		addr_me.sin6_addr	= inaddr6_any;
+		addr_me.sin6_addr	= in6addr_any;
 
 		/* Bind to the socket */
 		if (bind(rx_sock, (struct sockaddr *) &addr_me, sizeof(addr_me)) == -1) {
 			perror("Error on bind");
 		}
 
-		printf("- Listener started on %s:%i\n", inet_ntop(AF_INET6, &addr_me.sin6_addr, straddr, sizeof(straddr)), ETHERNET_AUN_UDPPORT); 
+		printf("- Listening for UDP connections on %s:%i\n", inet_ntop(AF_INET6, &addr_me.sin6_addr, straddr, sizeof(straddr)), ETHERNET_AUN_UDPPORT); 
 		fflush(stdout);
 		while (bye == false) {
 			if ((rx_length = recvfrom(rx_sock, (econet::Frame *) &frame, sizeof(econet::Frame), 0, (struct sockaddr *) &addr_incoming, &slen)) > 0) {
+				valid = econet::validateFrame(&frame, rx_length);
 				if (econet::netmon == true) {
 					commands::netmonPrintFrame("eth", false, &frame, rx_length);
 				}
-				if (econet::validateFrame(&frame, rx_length)) {
+				if (valid) {
 					if (frame.status || ECONET_FRAME_TOLOCAL) {
 						/* Frame is addressed to a station on our local network */
 						if (frame.status || ECONET_FRAME_TOME) {
@@ -272,6 +276,23 @@ namespace ethernet {
 		}
 		printf("- Listener stopped on %s:%i\n", inet_ntop(AF_INET6, &addr_me.sin6_addr, straddr, sizeof(straddr)), ETHERNET_AUN_UDPPORT);
 	}
+#ifdef ECONET_WITHOPENSSL
+	void ipv6_dtls_Listener(void) {
+		struct sockaddr_in6 addr_me;
+
+		/* Set IP header */
+		memset((char *) &addr_me, 0, sizeof(addr_me));
+		addr_me.sin6_family	= AF_INET6;
+		addr_me.sin6_port	= htons(ETHERNET_AUN_UDPPORT);
+		addr_me.sin6_addr	= in6addr_any;
+
+		printf("- Listening for DTLS connections on %s:%i\n", "[::]", ETHERNET_SAUN_UDPPORT);
+		while (bye == false) {
+//
+		}
+		printf(" Listener stopped on %s:%i\n", inet_ntop(AF_INET6, &addr_me.sin6_addr, straddr, sizeof(straddr)), ETHERNET_SAUN_UDPPORT);
+	}
+#endif
 #endif
 }
 

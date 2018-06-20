@@ -7,7 +7,9 @@
 #include <cstdio>			// Included for printf(), FILE*, fopen() and fclose()
 #include <cstdlib>			// Included for strtol()
 #include <cstring>			// Included for strcmp()
+
 #include "star_configure.h"
+#include "../main.h"			// strtoupper()
 
 using namespace std;
 
@@ -37,6 +39,8 @@ namespace commands {
 		int value;
 		FILE *fp_printer;
 
+		strtoupper(args[1]);
+	
 		if (args[1] == NULL) {
 			printf("STATION         %i\n", configuration::econet_station);
 			printf("NETWORK         %i\n", configuration::econet_network);

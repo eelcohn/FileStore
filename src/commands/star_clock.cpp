@@ -8,6 +8,7 @@
 #include <cstring>			// Included for strcmp()
 #include "../platforms/platform.h"	// startClock() and stopClock()
 #include "../settings.h"		// Global configuration variables are defined here
+#include "../main.h"			// strtoupper()
 
 using namespace std;
 
@@ -18,6 +19,7 @@ namespace commands {
 		if (args[1] == NULL) {
 			return(-2);
 		} else {
+			strtoupper(args[1]);
 			if (strcmp(args[1], "ON") == 0) {
 				api::startClock();
 				printf("Internal clock is now on (%iHz %i%%).\n", configuration::clockspeed, configuration::dutycycle);

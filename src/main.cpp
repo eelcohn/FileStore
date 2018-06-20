@@ -10,10 +10,10 @@
 #include <thread>			// Included for std::thread
 #include <unistd.h>			// geteuid()
 
+#include "main.h"			// Header file for this C++ module
 #include "errorhandler.h"		// Error handling functions
 #include "econet.h"			// Included for pollEconet() thread
 #include "ethernet.h"			// Included for pollEthernet() thread
-#include "main.h"			// Header file for this C++ module
 #include "users.h"			// Included for users::loadUsers()
 #include "stations.h"			// Included for users::loadStations()
 #include "commands/commands.h"		// All * commands
@@ -73,12 +73,12 @@ int main(int argc, char** argv) {
 	/* Spawn new thread for polling hardware and processing network data */
 //	std::thread thread_econet_listener(econet::pollNetworkReceive);
 	std::thread thread_ipv4_listener(ethernet::ipv4_Listener);
-#ifdef ECONET_IPV6
+#ifdef ECONET_WITHIPV6
 	std::thread thread_ipv6_listener(ethernet::ipv6_Listener);
 #endif
 #ifdef ECONET_WITHOPENSSL
 	std::thread thread_ipv4_dtls_listener(ethernet::ipv4_dtls_Listener);
-#ifdef ECONET_IPV6
+#ifdef ECONET_WITHIPV6
 	std::thread thread_ipv6_dtls_listener(ethernet::ipv6_dtls_Listener);
 #endif
 #endif
@@ -214,7 +214,7 @@ void executeCommand(char **args) {
 	}
 
 	for (i = 0; i < totalNumOfCommands(); i++) {
-		if (strcmp(args[0], cmds[i][0]) == 0) {
+		if (strcmp(strtoupper(args[0]), cmds[i][0]) == 0) {
 			switch (result = (*cmds_jumptable[i])(args)) {
 				case 0 :
 					break;
@@ -236,5 +236,17 @@ void executeCommand(char **args) {
 	}
 
 	errorHandler(0x000000FE, "Bad command");
+}
+
+/* Capitalize a string */
+char * strtoupper(char *s) {
+	int l;
+
+	l = strlen(s);
+	for (int i = 0; i < l; i++)
+		if (s[i] >= 'a' and s[i] <= 'z')
+			s[i] = s[i] - 32;
+
+	return s;
 }
 
