@@ -194,5 +194,84 @@ namespace ethernet {
 		return(0);
 	}
 #endif
+//#ifdef ECONET_WITHIPV6
+#ifdef HAVE_INET6_DEFINES
+	/* Periodically check if we've received an Econet network package */
+	void ipv6_Listener(void) {
+		int reuseconn;
+		int rx_sock;
+		int rx_length;
+		econet::Frame frame;
+
+		struct sockaddr_in6 addr_me, addr_incoming;
+		struct timeval timeout;
+		socklen_t slen = sizeof(addr_incoming);
+		char straddr[INET6_ADDRSTRLEN];
+
+		if ((rx_sock = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
+			perror("socket() failed");
+		}
+
+		/* Set socket to allow multiple connections */
+		reuseconn = 1;
+		if (setsockopt(rx_sock, SOL_SOCKET, SO_REUSEADDR, (char *)&reuseconn, sizeof(reuseconn)) == -1) {
+			perror("setsockopt(SO_REUSEADDR)");
+		}
+
+		/* Set timeout on socket to prevent recvfrom from blocking execution */
+		timeout.tv_sec = 0;
+		timeout.tv_usec = 100000;
+		if (setsockopt(rx_sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) < 0) {
+			perror("Error setting timeout on socket");
+		}
+
+		/* Set IP header */
+		memset((char *) &addr_me, 0, sizeof(addr_me));
+		addr_me.sin6_family	= AF_INET6;
+		addr_me.sin6_port	= htons(ETHERNET_AUN_UDPPORT);
+		addr_me.sin6_addr	= inaddr6_any;
+
+		/* Bind to the socket */
+		if (bind(rx_sock, (struct sockaddr *) &addr_me, sizeof(addr_me)) == -1) {
+			perror("Error on bind");
+		}
+
+		printf("- Listener started on %s:%i\n", inet_ntop(AF_INET6, &addr_me.sin6_addr, straddr, sizeof(straddr)), ETHERNET_AUN_UDPPORT); 
+		fflush(stdout);
+		while (bye == false) {
+			if ((rx_length = recvfrom(rx_sock, (econet::Frame *) &frame, sizeof(econet::Frame), 0, (struct sockaddr *) &addr_incoming, &slen)) > 0) {
+				if (econet::netmon == true) {
+					commands::netmonPrintFrame("eth", false, &frame, rx_length);
+				}
+				if (econet::validateFrame(&frame, rx_length)) {
+					if (frame.status || ECONET_FRAME_TOLOCAL) {
+						/* Frame is addressed to a station on our local network */
+						if (frame.status || ECONET_FRAME_TOME) {
+							/* Frame is addressed to us */
+							econet::processFrame(&frame, rx_length);
+						} else {
+							/* Frame is addressed to a station on our local network */
+							frame.data[0] = 0x00; // Set destination network to local network
+							econet::transmitFrame((econet::Frame *) &frame, rx_length);
+						}
+					} else {
+						/* Frame is addressed to a station on another network */
+//						if ((configuration::relay_only_known_networks) && (econet::known_networks[frame.dst_network].network == 0)) {
+							/* Don't relay the frame, but reply with ICMP 3.0: Destination network unknown */
+//							ethernet::send ICMP 3.0: Destination network unknown
+//						} else {
+							/* Relay frame to other known network(s) */
+							econet::transmitFrame((econet::Frame *) &frame, rx_length);
+//						}
+					}
+				}
+			} else {
+				/* Ease down on the CPU when polling the network */
+//				usleep(10000);
+			}
+		}
+		printf("- Listener stopped on %s:%i\n", inet_ntop(AF_INET6, &addr_me.sin6_addr, straddr, sizeof(straddr)), ETHERNET_AUN_UDPPORT);
+	}
+#endif
 }
 

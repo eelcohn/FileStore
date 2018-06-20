@@ -70,15 +70,6 @@ int main(int argc, char** argv) {
 		exit(0x000000FF);
 	}
 
-	/* Load !Boot */
-	fp_bootfile = fopen(BOOTFILE, "r");
-	if (fp_bootfile == NULL) {
-		bootdone = true;
-	} else {
-		printf("- Execing %s:\n", BOOTFILE);
-		bootdone = false;
-	}
-
 	/* Spawn new thread for polling hardware and processing network data */
 //	std::thread thread_econet_listener(econet::pollNetworkReceive);
 	std::thread thread_ipv4_listener(ethernet::ipv4_Listener);
@@ -96,6 +87,15 @@ int main(int argc, char** argv) {
 
 	/* Scan the Econet for existing bridges and networks */
 	econet::sendWhatNetBroadcast();
+
+	/* Load !Boot */
+	fp_bootfile = fopen(BOOTFILE, "r");
+	if (fp_bootfile == NULL) {
+		bootdone = true;
+	} else {
+		printf("- Execing %s:\n", BOOTFILE);
+		bootdone = false;
+	}
 
 	/* Main loop */
 	bye = false;
