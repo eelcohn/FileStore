@@ -11,8 +11,7 @@
 #include "../econet.h"			// Included for Econet::frame
 #ifdef __GNUC__
 #pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wcomment"
-//#pragma GCC system_header
+#pragma GCC system_header
 //#include <pigpio.h>
 #include "../pigpio/pigpio.h"
 #pragma GCC diagnostic pop

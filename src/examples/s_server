@@ -1,2 +1,2 @@
-openssl s_server -cert ../../conf/keys/server.crt -key ../../conf/keys/priv.pem -dtls1_2 -accept 33859
+openssl s_server -cert ../../conf/keys/server.cert -key ../../conf/keys/server.key -dtls1_2 -accept 33859
 
