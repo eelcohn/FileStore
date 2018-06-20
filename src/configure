@@ -6,8 +6,8 @@ if [ ! -d /usr/include/openssl/ ] || [[ ! $(ldconfig -p | grep libssl) ]]; then
 	exit -1
 fi
 
-if [[ ! $(openssl version | grep 1.1.0) ]]; then
-	echo OpenSSL version 1.1.0 or above required
+if [[ ! $(openssl version | grep 1.0.2) ]]; then
+	echo OpenSSL version 1.0.2 or above required
 #	exit -1
 fi
 

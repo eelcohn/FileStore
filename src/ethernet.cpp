@@ -28,8 +28,9 @@ namespace ethernet {
 
 		struct sockaddr_in addr_me, addr_incoming;
 		struct timeval timeout;
+		socklen_t slen = sizeof(addr_incoming);
 
-		if ((rx_sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
+		if ((rx_sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
 			perror("socket() failed");
 		}
 
@@ -51,11 +52,12 @@ namespace ethernet {
 		addr_me.sin_family	= AF_INET;
 		addr_me.sin_port	= htons(ETHERNET_AUN_UDPPORT);
 		addr_me.sin_addr.s_addr	= htonl(INADDR_ANY);
+
+		/* Bind to the socket */
 		if (bind(rx_sock, (struct sockaddr *) &addr_me, sizeof(addr_me)) == -1) {
 			perror("Error on bind");
 		}
 
-		socklen_t slen = sizeof(addr_incoming);
 		printf("- Listener started on %s:%i\n", inet_ntoa(addr_me.sin_addr), ETHERNET_AUN_UDPPORT); 
 		fflush(stdout);
 		while (bye == false) {
