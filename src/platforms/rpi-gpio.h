@@ -9,8 +9,8 @@
 #define ECONET_GPIO_HEADER
 
 #include "../econet.h"			// Included for Econet::frame
-#include <pigpio.h>
-//#include "../pigpio/pigpio.h"
+//#include <pigpio.h>
+#include "../pigpio/pigpio.h"
 
 #define ADLC_D0		17		//
 #define ADLC_D1		18		//

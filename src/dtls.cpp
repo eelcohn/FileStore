@@ -115,10 +115,14 @@ int dtls_InitContextFromKeystore(DTLSParams* params, const char* keyname) {
 	int result = 0;
 
 	// Create a new context using DTLS
+#if (OPENSSL_VERSION_NUMBER < 0x10100000L)
+	params->ctx = SSL_CTX_new(DTLSv1_2_method());
+#else
 	params->ctx = SSL_CTX_new(DTLS_method());
 	if (SSL_CTX_set_min_proto_version(params->ctx, DTLS1_2_VERSION) != 1) {
 		printf("Warning: dtls_InitContextFromKeystore: cannot set minimum supported protocol version\n");
 	} 
+#endif
 	if (params->ctx == NULL) {
 		printf("Error: cannot create SSL_CTX.\n");
 		ERR_print_errors_fp(stderr);
