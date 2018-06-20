@@ -19,6 +19,8 @@ using namespace std;
 
 
 namespace ethernet {
+	char straddr[INET6_ADDRSTRLEN];
+
 	/* Periodically check if we've received an Econet network package */
 	void ipv4_Listener(void) {
 		int reuseconn;
@@ -163,9 +165,9 @@ namespace ethernet {
 
 		/* Set IP header */
 		memset((char *) &addr_me, 0, sizeof(addr_me));
-		addr_me.sin6_family	= AF_INET;
-		addr_me.sin6_port	= htons(ETHERNET_SAUN_UDPPORT);
-		addr_me.sin6_addr	= in6addr_any;
+		addr_me.sin_family	= AF_INET;
+		addr_me.sin_port	= htons(ETHERNET_SAUN_UDPPORT);
+		addr_me.sin_addr.s_addr	= htonl(INADDR_ANY);
 
 		/* Bind to the socket */
 		if (bind(rx_sock, (struct sockaddr *) &addr_me, sizeof(addr_me)) == -1) {
@@ -184,7 +186,7 @@ namespace ethernet {
 		fflush(stdout);
 		while (bye == false) {
 			// Accept an incoming UDP packet (connection)
-			int client = accept(sock, (struct sockaddr*) &addr, &len);
+			int client = accept(rx_sock, (struct sockaddr*) &addr_incoming, &slen);
 			if (client < 0) {
 				perror("Unable to accept");
 				exit(EXIT_FAILURE);
@@ -232,13 +234,13 @@ namespace ethernet {
 				}
 			}
 			// When done reading the single message, close the client's connection and continue waiting for another.
-			close(client);
+//			close(client);
 		}
 
 		// Teardown the link and context state.
 		dtls_Shutdown(&server);
 
-		printf("- Listener stopped on %s:%i\n", inet_ntop(AF_INET6, &addr_me.sin6_addr, straddr, sizeof(straddr)), ETHERNET_SAUN_UDPPORT);
+		printf("- Listener stopped on %s:%i\n", inet_ntop(AF_INET, &addr_me.sin_addr, straddr, sizeof(straddr)), ETHERNET_SAUN_UDPPORT);
 	}
 
 	int transmit_dtlsFrame(char *address, unsigned short port, econet::Frame *frame, int tx_length) {
@@ -246,8 +248,6 @@ namespace ethernet {
 	}
 #endif
 #ifdef ECONET_WITHIPV6
-	char straddr[INET6_ADDRSTRLEN];
-
 	/* Periodically check if we've received an Econet network package */
 	void ipv6_Listener(void) {
 		int reuseconn;

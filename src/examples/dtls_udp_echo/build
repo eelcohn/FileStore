@@ -1,0 +1,2 @@
+gcc dtls_udp_echo.c -o dtls_udp_echo -lssl -lcrypto -lpthread
+
