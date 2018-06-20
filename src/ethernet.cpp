@@ -129,16 +129,48 @@ namespace ethernet {
 #ifdef ECONET_WITHOPENSSL
 	/* Periodically check if we've received an Econet network package */
 	void ipv4_dtls_Listener (void) {
-		int rx_sock, client, rx_length;
-		char buf[4096];
-		struct sockaddr_in addr;
-		DTLSParams server;
+		int reuseconn;
+		int rx_sock;
+		int rx_length;
+		econet::Frame frame;
+		bool valid;
 
-		// Initialize whatever OpenSSL state is necessary to execute the DTLS protocol.
+		struct sockaddr_in addr_me, addr_incoming;
+		struct timeval timeout;
+		socklen_t slen = sizeof(addr_incoming);
+
+		DTLSParams server;
+		SSL *ssl;
+
 		dtls_Begin();
 
-		// Create the server UDP listener socket
-		rx_sock = _createSocket(AF_INET, NULL, ETHERNET_SAUN_UDPPORT);
+		if ((rx_sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
+			perror("socket() failed");
+		}
+
+		/* Set socket to allow multiple connections */
+		reuseconn = 1;
+		if (setsockopt(rx_sock, SOL_SOCKET, SO_REUSEADDR, (char *)&reuseconn, sizeof(reuseconn)) == -1) {
+			perror("setsockopt(SO_REUSEADDR)");
+		}
+
+		/* Set timeout on socket to prevent recvfrom from blocking execution */
+		timeout.tv_sec = 0;
+		timeout.tv_usec = 100000;
+		if (setsockopt(rx_sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) < 0) {
+			perror("Error setting timeout on socket");
+		}
+
+		/* Set IP header */
+		memset((char *) &addr_me, 0, sizeof(addr_me));
+		addr_me.sin6_family	= AF_INET;
+		addr_me.sin6_port	= htons(ETHERNET_SAUN_UDPPORT);
+		addr_me.sin6_addr	= in6addr_any;
+
+		/* Bind to the socket */
+		if (bind(rx_sock, (struct sockaddr *) &addr_me, sizeof(addr_me)) == -1) {
+			perror("Error on bind");
+		}
 
 		// Initialize the DTLS context from the keystore and then create the server SSL state.
 		if (dtls_InitContextFromKeystore(&server, "server") < 0) {
@@ -148,18 +180,15 @@ namespace ethernet {
 			exit(EXIT_FAILURE);
 		}
 
-		printf("- Listening for DTLS connections on %s:%i\n", "0.0.0.0", ETHERNET_SAUN_UDPPORT);
-		// Loop forever accepting messages from the client, printing their messages, and then terminating their connections
+		printf("- Listening for UDP connections on %s:%i\n", inet_ntop(AF_INET, &addr_me.sin_addr, straddr, sizeof(straddr)), ETHERNET_AUN_UDPPORT); 
+		fflush(stdout);
 		while (bye == false) {
-			uint len = sizeof(addr);
-//			SSL *ssl;
-
 			// Accept an incoming UDP packet (connection)
-			client = accept(rx_sock, (struct sockaddr*) &addr, &len);
+			int client = accept(sock, (struct sockaddr*) &addr, &len);
 			if (client < 0) {
-//				perror("Unable to accept");
-//				exit(EXIT_FAILURE);
-			} else {
+				perror("Unable to accept");
+				exit(EXIT_FAILURE);
+			}
 
 			// Set the SSL descriptor to that of the client socket
 			SSL_set_fd(server.ssl, client);
@@ -170,26 +199,46 @@ namespace ethernet {
 				ERR_print_errors_fp(stderr);
 			} else {
 				// Read from the DTLS link
-				if ((rx_length = SSL_read(server.ssl, buf, sizeof(buf))) > 0) {
-					econet::validateFrame((econet::Frame *) &buf, rx_length);
+				if ((rx_length = SSL_read(server.ssl, (econet::Frame *) &frame, sizeof(econet::Frame))) > 0) {
+					valid = econet::validateFrame(&frame, rx_length);
 					if (econet::netmon == true) {
-						commands::netmonPrintFrame("eth s", false, (econet::Frame *) &buf, rx_length);
+						commands::netmonPrintFrame("eth", false, &frame, rx_length);
 					}
-					// Echo the message back to the client
-					SSL_write(server.ssl, "RESPONSE", sizeof("RESPONSE"));
+					if (valid) {
+						if (frame.status || ECONET_FRAME_TOLOCAL) {
+							/* Frame is addressed to a station on our local network */
+							if (frame.status || ECONET_FRAME_TOME) {
+								/* Frame is addressed to us */
+								econet::processFrame(&frame, rx_length);
+							} else {
+								/* Frame is addressed to a station on our local network */
+								frame.data[0] = 0x00; // Set destination network to local network
+								econet::transmitFrame((econet::Frame *) &frame, rx_length);
+							}
+						} else {
+							/* Frame is addressed to a station on another network */
+	//						if ((configuration::relay_only_known_networks) && (econet::known_networks[frame.dst_network].network == 0)) {
+								/* Don't relay the frame, but reply with ICMP 3.0: Destination network unknown */
+	//							ethernet::send ICMP 3.0: Destination network unknown
+	//						} else {
+								/* Relay frame to other known network(s) */
+								econet::transmitFrame((econet::Frame *) &frame, rx_length);
+	//						}
+						}
+					}
+				} else {
+					/* Ease down on the CPU when polling the network */
+	//				usleep(10000);
 				}
 			}
-
-			// When done reading the single message, close the client's connection
-			// and continue waiting for another.
+			// When done reading the single message, close the client's connection and continue waiting for another.
 			close(client);
-}
 		}
 
 		// Teardown the link and context state.
 		dtls_Shutdown(&server);
 
-		printf("- Listener stopped on %s:%i\n", "0.0.0.0", ETHERNET_SAUN_UDPPORT);
+		printf("- Listener stopped on %s:%i\n", inet_ntop(AF_INET6, &addr_me.sin6_addr, straddr, sizeof(straddr)), ETHERNET_SAUN_UDPPORT);
 	}
 
 	int transmit_dtlsFrame(char *address, unsigned short port, econet::Frame *frame, int tx_length) {
