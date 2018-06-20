@@ -14,5 +14,6 @@ namespace ethernet {
 	void	ipv4_Listener(void);
 	int	transmitFrame(char *address, unsigned short port, econet::Frame *frame, int tx_length);
 	void	ipv4_dtls_Listener (void);
+	int	transmit_dtlsFrame(char *address, unsigned short port, econet::Frame *frame, int tx_length);
 }
 #endif

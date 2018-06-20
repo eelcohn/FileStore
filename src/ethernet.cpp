@@ -56,6 +56,7 @@ namespace ethernet {
 		}
 
 		socklen_t slen = sizeof(addr_incoming);
+		printf("- Listener started on %s:%i\n", inet_ntoa(addr_me.sin_addr), ETHERNET_AUN_UDPPORT); 
 		fflush(stdout);
 		while (bye == false) {
 			if ((rx_length = recvfrom(rx_sock, (econet::Frame *) &frame, sizeof(econet::Frame), 0, (struct sockaddr *) &addr_incoming, &slen)) > 0) {
@@ -89,6 +90,7 @@ namespace ethernet {
 //				usleep(10000);
 			}
 		}
+		printf("- Listener stopped on %s:%i\n", inet_ntoa(addr_me.sin_addr), ETHERNET_AUN_UDPPORT);
 	}
 
 	int transmitFrame(char *address, unsigned short port, econet::Frame *frame, int tx_length) {
@@ -142,6 +144,7 @@ namespace ethernet {
 			exit(EXIT_FAILURE);
 		}
 
+		printf("- Listener started on %s:%i\n", "[::]", ETHERNET_SAUN_UDPPORT);
 		// Loop forever accepting messages from the client, printing their messages, and then terminating their connections
 		while (bye == false) {
 			uint len = sizeof(addr);
@@ -181,6 +184,12 @@ namespace ethernet {
 
 		// Teardown the link and context state.
 		dtls_Shutdown(&server);
+
+		printf("- Listener stopped on %s:%i\n", "[::]", ETHERNET_SAUN_UDPPORT);
+	}
+
+	int transmit_dtlsFrame(char *address, unsigned short port, econet::Frame *frame, int tx_length) {
+		return(0);
 	}
 #endif
 }

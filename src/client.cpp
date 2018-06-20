@@ -15,13 +15,11 @@ bool	dtls = false;
 bool	ipv4 = false;
 bool	ipv6 = false;
 int	host = -1;
-
-
+char	*buffer;
+size_t	numRead;
 
 int main(int argc, char** argv) {
-	int i;
-	size_t numRead;
-	char *buffer;
+	int i, len;
 	FILE *fp;
 
 	/* Analyse command line parameters */
@@ -32,7 +30,7 @@ int main(int argc, char** argv) {
 		}
 
 		if ((strcmp(argv[i], "-h") == 0) || (strcmp(argv[i], "--host") == 0)) {
-			if (i++ != argc)
+			if (++i != argc)
 				host = i;
 			else {
 				printf("--host: no parameter specified\n");
@@ -43,7 +41,7 @@ int main(int argc, char** argv) {
 		if ((strcmp(argv[i], "-f") == 0) || (strcmp(argv[i], "--file") == 0)) {
 			if (++i != argc)
 				// Read the contents of the file (up to 4KB) into a buffer
-				if (fp = fopen(argv[i], "rb") != NULL) {
+				if ((fp = fopen(argv[i], "rb")) != NULL) {
 					buffer = (char *)malloc(4096);
 					numRead = fread(buffer, 1, 4096, fp);
 				} else {
@@ -57,22 +55,23 @@ int main(int argc, char** argv) {
 		}
 
 		if ((strcmp(argv[i], "-x") == 0) || (strcmp(argv[i], "--hex") == 0)) {
-			if (++i != argc)
+			if (++i != argc) {
 				buffer = (char *)malloc(4096);
-				for (j = 0; j < (strlen(argv[i]) / 2); j++) {
-					sscanf(hexstring + 2*j, "%02x", &buffer[j]);
+				len = strlen(argv[i]);	
+				for (size_t count = 0; count < (len / 2); count++) {
+					sscanf(argv[i] + 2*count, "%02x", &buffer[count]);
 				}
-			else {
+			} else {
 				printf("--hex: no parameter specified\n");
 				exit(1);
 			}
 		}
 
 		if ((strcmp(argv[i], "-s") == 0) || (strcmp(argv[i], "--string") == 0)) {
-			if (++i != argc)
-				char *buffer = argv[i];
+			if (++i != argc) {
+				buffer = argv[i];
 				numRead = strlen(argv[i]);
-			else {
+			} else {
 				printf("--string: no parameter specified\n");
 				exit(1);
 			}
@@ -91,7 +90,7 @@ int main(int argc, char** argv) {
 	if (dtls)
 		dtls_connect();
 	else
-		udp_connect(AF_INET, argv[host], 32768);
+		udp_connect(argv[host], 32768);
 }
 
 void dtls_connect(void) {
@@ -139,12 +138,6 @@ void dtls_connect(void) {
 	dtls_Shutdown(&client);
 }
 
-void udp_connect(int family, char *address, unsigned short port) {
-	int socket;
-	struct sockaddr_in addr;
-
-	socket = _createSocket(family, address, port);
-
-	if (sendto(socket, buffer, strlen(buffer)+1, 0, (struct sockaddr *)&
+void udp_connect(char *address, unsigned short port) {
 	
 }

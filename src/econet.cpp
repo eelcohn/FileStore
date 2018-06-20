@@ -529,9 +529,9 @@ namespace econet {
 		frame.data[0x03]	= configuration::ethernet_station;
 		frame.data[0x06]	= configuration::econet_network;
 
-		ethernet::transmitFrame("127.0.0.1", ETHERNET_AUN_UDPPORT, &frame, sizeof(ECONET_BROADCAST_NEWBRIDGE));
-	#ifdef OPENSSL
-		ethernet::transmitSecureAUNFrame("127.0.0.1", ETHERNET_SAUN_UDPPORT, &frame, sizeof(ECONET_BROADCAST_NEWBRIDGE));
+		ethernet::transmitFrame((char *)"127.0.0.1", ETHERNET_AUN_UDPPORT, &frame, sizeof(ECONET_BROADCAST_NEWBRIDGE));
+	#ifdef ECONET_WITHOPENSSL
+		ethernet::transmit_dtlsFrame((char *)"127.0.0.1", ETHERNET_SAUN_UDPPORT, &frame, sizeof(ECONET_BROADCAST_NEWBRIDGE));
 	#endif
 	}
 
@@ -548,9 +548,9 @@ namespace econet {
 		frame.data[0x02]	= configuration::ethernet_network;
 		frame.data[0x03]	= configuration::ethernet_station;
 
-		ethernet::transmitFrame("127.0.0.1", ETHERNET_AUN_UDPPORT, &frame, sizeof(ECONET_BROADCAST_WHATNET));
-	#ifdef OPENSSL
-		ethernet::transmitSecureAUNFrame("127.0.0.1", ETHERNET_SAUN_UDPPORT, &frame, sizeof(ECONET_BROADCAST_WHATNET));
+		ethernet::transmitFrame((char *)"127.0.0.1", ETHERNET_AUN_UDPPORT, &frame, sizeof(ECONET_BROADCAST_WHATNET));
+	#ifdef ECONET_WITHOPENSSL
+		ethernet::transmit_dtlsFrame((char *)"127.0.0.1", ETHERNET_SAUN_UDPPORT, &frame, sizeof(ECONET_BROADCAST_WHATNET));
 	#endif
 	}
 

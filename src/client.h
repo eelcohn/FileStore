@@ -26,3 +26,6 @@ Examples:\n\
       --help                        show help message\n\
 ";
 
+void dtls_connect(void);
+void udp_connect(char *address, unsigned short port);
+
