@@ -96,6 +96,9 @@ void dtls_Begin() {
 }
 
 void dtls_End() {
+#if (OPENSSL_VERSION_NUMBER < 0x10100000L)
+	ERR_remove_thread_state(NULL);
+#endif
 	ENGINE_cleanup();
 	CONF_modules_unload(1);
 	ERR_free_strings();
