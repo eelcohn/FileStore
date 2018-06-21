@@ -12,7 +12,7 @@
 #include "platforms/platform.h"		// All high-level API calls
 #include "settings.h"			// Global configuration variables are defined here
 #include "econet.h"			// Header file for this code
-#include "ethernet.h"			// Included for ethernet::transmitFrame()
+#include "aun.h"			// Included for aun::transmitFrame()
 #include "commands/commands.h"		// Included for commands::netmonPrintFrame()
 
 using namespace std;
@@ -51,7 +51,7 @@ namespace econet {
 //						econet::transmitFrame((econet::Frame *) &frame, rx_length);
 //					} else {
 						/* Relay frame to other known network(s) */
-						ethernet::transmitFrame(NULL, ETHERNET_AUN_UDPPORT, (econet::Frame *) &frame, rx_length);
+						aun::transmitFrame(NULL, AUN_UDPPORT, (econet::Frame *) &frame, rx_length);
 //					}
 				}
 			}
@@ -521,17 +521,17 @@ namespace econet {
 		memmove((econet::Frame *) &frame, ECONET_BROADCAST_NEWBRIDGE, sizeof(ECONET_BROADCAST_NEWBRIDGE));
 		frame.data[0x02]	= configuration::econet_network;
 		frame.data[0x03]	= configuration::econet_station;
-		frame.data[0x06]	= configuration::ethernet_network;
+		frame.data[0x06]	= configuration::aun_network;
 
 		econet::transmitFrame(&frame, sizeof(ECONET_BROADCAST_NEWBRIDGE));
 
-		frame.data[0x02]	= configuration::ethernet_network;
-		frame.data[0x03]	= configuration::ethernet_station;
+		frame.data[0x02]	= configuration::aun_network;
+		frame.data[0x03]	= configuration::aun_station;
 		frame.data[0x06]	= configuration::econet_network;
 
-		ethernet::transmitFrame((char *)"127.0.0.1", ETHERNET_AUN_UDPPORT, &frame, sizeof(ECONET_BROADCAST_NEWBRIDGE));
+		aun::transmitFrame((char *)"127.0.0.1", AUN_UDPPORT, &frame, sizeof(ECONET_BROADCAST_NEWBRIDGE));
 	#ifdef ECONET_WITHOPENSSL
-		ethernet::transmit_dtlsFrame((char *)"127.0.0.1", ETHERNET_SAUN_UDPPORT, &frame, sizeof(ECONET_BROADCAST_NEWBRIDGE));
+		aun::transmit_dtlsFrame((char *)"127.0.0.1", DTLS_UDPPORT, &frame, sizeof(ECONET_BROADCAST_NEWBRIDGE));
 	#endif
 	}
 
@@ -545,12 +545,12 @@ namespace econet {
 
 		econet::transmitFrame(&frame, sizeof(ECONET_BROADCAST_WHATNET));
 
-		frame.data[0x02]	= configuration::ethernet_network;
-		frame.data[0x03]	= configuration::ethernet_station;
+		frame.data[0x02]	= configuration::aun_network;
+		frame.data[0x03]	= configuration::aun_station;
 
-		ethernet::transmitFrame((char *)"127.0.0.1", ETHERNET_AUN_UDPPORT, &frame, sizeof(ECONET_BROADCAST_WHATNET));
+		aun::transmitFrame((char *)"127.0.0.1", AUN_UDPPORT, &frame, sizeof(ECONET_BROADCAST_WHATNET));
 	#ifdef ECONET_WITHOPENSSL
-		ethernet::transmit_dtlsFrame((char *)"127.0.0.1", ETHERNET_SAUN_UDPPORT, &frame, sizeof(ECONET_BROADCAST_WHATNET));
+		aun::transmit_dtlsFrame((char *)"127.0.0.1", DTLS_UDPPORT, &frame, sizeof(ECONET_BROADCAST_WHATNET));
 	#endif
 	}
 

@@ -40,14 +40,14 @@ LIBS =	-lcrypt \
 # define the C source files
 MAIN_SRCS = \
 	main.cpp \
+	aun.cpp \
 	debug.cpp \
 	dtls.cpp \
 	econet.cpp \
-	ethernet.cpp \
 	errorhandler.cpp \
+	netfs.cpp \
 	stations.cpp \
 	users.cpp \
-	netfs.cpp \
 	commands/commands.cpp \
 	commands/star_clock.cpp \
 	commands/star_configure.cpp \

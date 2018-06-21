@@ -12,8 +12,8 @@ namespace configuration {
 	extern unsigned char	*printername;
 	extern unsigned char	econet_station;
 	extern unsigned char	econet_network;
-	extern unsigned char	ethernet_station;
-	extern unsigned char	ethernet_network;
+	extern unsigned char	aun_station;
+	extern unsigned char	aun_network;
 	extern unsigned int	autolearn;
 	extern bool		relay_only_known_networks;
 	extern unsigned char	*volume;

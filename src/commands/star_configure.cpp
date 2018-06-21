@@ -20,8 +20,8 @@ namespace configuration {
 	unsigned char	*printername = (unsigned char *)"RPIPRN";
 	unsigned char	econet_station = 254;
 	unsigned char	econet_network = 1;
-	unsigned char	ethernet_station;
-	unsigned char	ethernet_network;
+	unsigned char	aun_station;
+	unsigned char	aun_network;
 	unsigned char	autolearn = 0;					// Autolearning for !Stations file is OFF (1=SESSION: only for this session, do not update !Stations / 2=FULL: add new stations to !Stations file)
 	bool		relay_only_known_networks = false;
 	unsigned char	*volume = NULL;
@@ -44,7 +44,7 @@ namespace commands {
 		if (args[1] == NULL) {
 			printf("STATION         %i\n", configuration::econet_station);
 			printf("NETWORK         %i\n", configuration::econet_network);
-			printf("ETHNETWORK      %i\n", configuration::ethernet_network);
+			printf("AUNNETWORK      %i\n", configuration::aun_network);
 			printf("AUTOLEARN       %i\n", configuration::autolearn);
 			printf("VOLUME          %s\n", configuration::volume);
 			printf("PRINTQUEUE      %s\n", configuration::printqueue);
@@ -73,14 +73,14 @@ namespace commands {
 				configuration::econet_network = value;
 				printf("Econet network ID set to %i\n", value);
 			}
-		} else if (strcmp(args[1], "ETHNETWORK") == 0) {
+		} else if (strcmp(args[1], "AUNNETWORK") == 0) {
 			value = strtol(args[2], NULL, 10);
 			if ((value < 1) || (value > 254)) {
 				printf("Error: %s is an invalid network ID\n", args[2]);
 				return(0x000000FD);
 			} else {
-				configuration::ethernet_network = value;
-				printf("Ethernet network ID set to %i\n", value);
+				configuration::aun_network = value;
+				printf("AUN network ID set to %i\n", value);
 			}
 		} else if (strcmp(args[1], "PRINTQUEUE") == 0) {
 			if (!(fp_printer = fopen(args[2], "w"))) {

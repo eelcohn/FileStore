@@ -13,7 +13,7 @@
 #include "main.h"			// Header file for this C++ module
 #include "errorhandler.h"		// Error handling functions
 #include "econet.h"			// Included for pollEconet() thread
-#include "ethernet.h"			// Included for pollEthernet() thread
+#include "aun.h"			// Included for pollAUN() thread
 #include "users.h"			// Included for users::loadUsers()
 #include "stations.h"			// Included for users::loadStations()
 #include "commands/commands.h"		// All * commands
@@ -64,7 +64,7 @@ int main(int argc, char** argv) {
 		exit(0x00000021);
 	}
 
-	/* Load !Stations (Econet to/from Ethernet translation table) */
+	/* Load !Stations (Econet to/from AUN translation table) */
 	if (!stations::loadStations()) {
 		errorHandler(0x000000FF, "Could not load !Stations file");
 		exit(0x000000FF);
@@ -72,14 +72,14 @@ int main(int argc, char** argv) {
 
 	/* Spawn new thread for polling hardware and processing network data */
 //	std::thread thread_econet_listener(econet::pollNetworkReceive);
-	std::thread thread_ipv4_listener(ethernet::ipv4_Listener);
+	std::thread thread_ipv4_listener(aun::ipv4_Listener);
 #ifdef ECONET_WITHIPV6
-	std::thread thread_ipv6_listener(ethernet::ipv6_Listener);
+	std::thread thread_ipv6_listener(aun::ipv6_Listener);
 #endif
 #ifdef ECONET_WITHOPENSSL
-	std::thread thread_ipv4_dtls_listener(ethernet::ipv4_dtls_Listener);
+	std::thread thread_ipv4_dtls_listener(aun::ipv4_dtls_Listener);
 #ifdef ECONET_WITHIPV6
-	std::thread thread_ipv6_dtls_listener(ethernet::ipv6_dtls_Listener);
+	std::thread thread_ipv6_dtls_listener(aun::ipv6_dtls_Listener);
 #endif
 #endif
 	/* Announce that a new Econet bridge is online on the network */

@@ -1,16 +1,16 @@
-/* ethernet.h
+/* aun.h
  * All Ethernet send and receive functions
  *
  * (c) Eelco Huininga 2017-2018
  */
 
-#ifndef ECONET_ETHERNET_HEADER
-#define ECONET_ETHERNET_HEADER
+#ifndef ECONET_AUN_HEADER
+#define ECONET_AUN_HEADER
 
-#define ETHERNET_AUN_UDPPORT	0x8000
-#define ETHERNET_SAUN_UDPPORT	0x8443
+#define AUN_UDPPORT	0x8000
+#define DTLS_UDPPORT	0x8443
 
-namespace ethernet {
+namespace aun {
 	void	ipv4_Listener(void);
 	int	transmitFrame(char *address, unsigned short port, econet::Frame *frame, int tx_length);
 #ifdef ECONET_WITHOPENSSL

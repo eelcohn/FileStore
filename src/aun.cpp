@@ -1,5 +1,5 @@
-/* ethernet.cpp
- * All Ethernet send and receive functions
+/* aun.cpp
+ * All AUN (Acorn Universal Networking) send and receive functions
  *
  * (c) Eelco Huininga 2017-2018
  */
@@ -10,7 +10,7 @@
 #include "settings.h"			// Global configuration variables are defined here
 #include "dtls.h"
 #include "econet.h"			// Included for Frame
-#include "ethernet.h"			// Header file for this code
+#include "aun.h"			// Header file for this code
 #include "main.h"			// Included for bye variable
 #include "commands/commands.h"		// Included for commands::netmonPrintFrame()
 
@@ -18,7 +18,7 @@ using namespace std;
 
 
 
-namespace ethernet {
+namespace aun {
 	char straddr[INET6_ADDRSTRLEN];
 
 	/* Periodically check if we've received an Econet network package */
@@ -53,7 +53,7 @@ namespace ethernet {
 		/* Set IP header */
 		memset((char *) &addr_me, 0, sizeof(addr_me));
 		addr_me.sin_family	= AF_INET;
-		addr_me.sin_port	= htons(ETHERNET_AUN_UDPPORT);
+		addr_me.sin_port	= htons(AUN_UDPPORT);
 		addr_me.sin_addr.s_addr	= htonl(INADDR_ANY);
 
 		/* Bind to the socket */
@@ -61,7 +61,7 @@ namespace ethernet {
 			perror("Error on bind");
 		}
 
-		printf("- Listening for UDP connections on %s:%i\n", inet_ntoa(addr_me.sin_addr), ETHERNET_AUN_UDPPORT); 
+		printf("- Listening for UDP connections on %s:%i\n", inet_ntoa(addr_me.sin_addr), AUN_UDPPORT); 
 		fflush(stdout);
 		while (bye == false) {
 			if ((rx_length = recvfrom(rx_sock, (econet::Frame *) &frame, sizeof(econet::Frame), 0, (struct sockaddr *) &addr_incoming, &slen)) > 0) {
@@ -96,7 +96,7 @@ namespace ethernet {
 //				usleep(10000);
 			}
 		}
-		printf("- Listener stopped on %s:%i\n", inet_ntoa(addr_me.sin_addr), ETHERNET_AUN_UDPPORT);
+		printf("- Listener stopped on %s:%i\n", inet_ntoa(addr_me.sin_addr), AUN_UDPPORT);
 	}
 
 	int transmitFrame(char *address, unsigned short port, econet::Frame *frame, int tx_length) {
@@ -104,7 +104,7 @@ namespace ethernet {
 		int tx_sock, slen = sizeof(addr_outgoing);
  
 		if ((tx_sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
-			fprintf(stderr, "ethernet::transmitFrame: socket() failed\n");
+			fprintf(stderr, "aun::transmitFrame: socket() failed\n");
 			return(-1);
 		}
  
@@ -113,7 +113,7 @@ namespace ethernet {
 		addr_outgoing.sin_port		= htons(port);
      
 		if (inet_aton(address, &addr_outgoing.sin_addr) == 0) {
-			fprintf(stderr, "ethernet::transmitFrame: invalid IPv4 address\n");
+			fprintf(stderr, "aun::transmitFrame: invalid IPv4 address\n");
 			return(-2);
 		}
 
@@ -121,7 +121,7 @@ namespace ethernet {
 			commands::netmonPrintFrame("eth", true, frame, tx_length);
 
 		if (sendto(tx_sock, (char *) &frame, sizeof(frame), 0, (struct sockaddr *) &addr_outgoing, slen) == -1) {
-			fprintf(stderr, "ethernet::transmitFrame: sendto() failed\n");
+			fprintf(stderr, "aun::transmitFrame: sendto() failed\n");
 			return(-3);
 		}
 //		close(tx_sock);
@@ -164,14 +164,20 @@ namespace ethernet {
 		}
 
 		/* Set IP header */
-		memset((char *) &addr_me, 0, sizeof(addr_me));
+		bzero(&addr_me, sizeof(addr_me));
+//		memset((char *) &addr_me, 0, sizeof(addr_me));
 		addr_me.sin_family	= AF_INET;
-		addr_me.sin_port	= htons(ETHERNET_SAUN_UDPPORT);
+		addr_me.sin_port	= htons(DTLS_UDPPORT);
 		addr_me.sin_addr.s_addr	= htonl(INADDR_ANY);
 
 		/* Bind to the socket */
-		if (bind(rx_sock, (struct sockaddr *) &addr_me, sizeof(addr_me)) == -1) {
+		if (bind(rx_sock, (struct sockaddr *) &addr_me, sizeof(addr_me)) != 0) {
 			perror("Error on bind");
+		}
+
+		/* Start listening to socket */
+		if (listen(rx_sock, 10) != 0) {
+			perror("Error on listen");
 		}
 
 		// Initialize the DTLS context from the keystore and then create the server SSL state.
@@ -182,11 +188,12 @@ namespace ethernet {
 			exit(EXIT_FAILURE);
 		}
 
-		printf("- Listening for UDP connections on %s:%i\n", inet_ntop(AF_INET, &addr_me.sin_addr, straddr, sizeof(straddr)), ETHERNET_AUN_UDPPORT); 
+		printf("- Listening for UDP connections on %s:%i\n", inet_ntop(AF_INET, &addr_me.sin_addr, straddr, sizeof(straddr)), DTLS_UDPPORT); 
 		fflush(stdout);
 		while (bye == false) {
 			// Accept an incoming UDP packet (connection)
-			int client = accept(rx_sock, (struct sockaddr*) &addr_incoming, &slen);
+//			int client = accept(rx_sock, (struct sockaddr*) &addr_incoming, &slen);
+			int client = SSL_accept(server.ssl);
 			if (client < 0) {
 				perror("Unable to accept");
 				exit(EXIT_FAILURE);
@@ -240,7 +247,7 @@ namespace ethernet {
 		// Teardown the link and context state.
 		dtls_Shutdown(&server);
 
-		printf("- Listener stopped on %s:%i\n", inet_ntop(AF_INET, &addr_me.sin_addr, straddr, sizeof(straddr)), ETHERNET_SAUN_UDPPORT);
+		printf("- Listener stopped on %s:%i\n", inet_ntop(AF_INET, &addr_me.sin_addr, straddr, sizeof(straddr)), DTLS_UDPPORT);
 	}
 
 	int transmit_dtlsFrame(char *address, unsigned short port, econet::Frame *frame, int tx_length) {
@@ -280,7 +287,7 @@ namespace ethernet {
 		/* Set IP header */
 		memset((char *) &addr_me, 0, sizeof(addr_me));
 		addr_me.sin6_family	= AF_INET6;
-		addr_me.sin6_port	= htons(ETHERNET_AUN_UDPPORT);
+		addr_me.sin6_port	= htons(AUN_UDPPORT);
 		addr_me.sin6_addr	= in6addr_any;
 
 		/* Bind to the socket */
@@ -288,7 +295,7 @@ namespace ethernet {
 			perror("Error on bind");
 		}
 
-		printf("- Listening for UDP connections on %s:%i\n", inet_ntop(AF_INET6, &addr_me.sin6_addr, straddr, sizeof(straddr)), ETHERNET_AUN_UDPPORT); 
+		printf("- Listening for UDP connections on %s:%i\n", inet_ntop(AF_INET6, &addr_me.sin6_addr, straddr, sizeof(straddr)), AUN_UDPPORT); 
 		fflush(stdout);
 		while (bye == false) {
 			if ((rx_length = recvfrom(rx_sock, (econet::Frame *) &frame, sizeof(econet::Frame), 0, (struct sockaddr *) &addr_incoming, &slen)) > 0) {
@@ -323,7 +330,7 @@ namespace ethernet {
 //				usleep(10000);
 			}
 		}
-		printf("- Listener stopped on %s:%i\n", inet_ntop(AF_INET6, &addr_me.sin6_addr, straddr, sizeof(straddr)), ETHERNET_AUN_UDPPORT);
+		printf("- Listener stopped on %s:%i\n", inet_ntop(AF_INET6, &addr_me.sin6_addr, straddr, sizeof(straddr)), AUN_UDPPORT);
 	}
 #ifdef ECONET_WITHOPENSSL
 	void ipv6_dtls_Listener(void) {
@@ -332,14 +339,14 @@ namespace ethernet {
 		/* Set IP header */
 		memset((char *) &addr_me, 0, sizeof(addr_me));
 		addr_me.sin6_family	= AF_INET6;
-		addr_me.sin6_port	= htons(ETHERNET_AUN_UDPPORT);
+		addr_me.sin6_port	= htons(DTLS_UDPPORT);
 		addr_me.sin6_addr	= in6addr_any;
 
-		printf("- Listening for DTLS connections on %s:%i\n", "[::]", ETHERNET_SAUN_UDPPORT);
+		printf("- Listening for DTLS connections on %s:%i\n", "[::]", DTLS_UDPPORT);
 		while (bye == false) {
 //
 		}
-		printf(" Listener stopped on %s:%i\n", inet_ntop(AF_INET6, &addr_me.sin6_addr, straddr, sizeof(straddr)), ETHERNET_SAUN_UDPPORT);
+		printf(" Listener stopped on %s:%i\n", inet_ntop(AF_INET6, &addr_me.sin6_addr, straddr, sizeof(straddr)), DTLS_UDPPORT);
 	}
 #endif
 #endif
