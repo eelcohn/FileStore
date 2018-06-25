@@ -100,7 +100,7 @@ gpioWrite (TMPRW, PI_LOW);
 		gpioWrite (CLKOUT_EN, PI_LOW);
 
 		// Start Phi2 clock (min=0.5us max=10us for a 68B54 according to the datasheet)
-		gpioHardwarePWM(ADLC_PHI2, 1000000, 500000);	// Set phi2 to 1MHz, 50% duty cycle
+		gpioHardwarePWM(ADLC_PHI2, 2000000, 500000);	// Set phi2 to 2MHz, 50% duty cycle
 
 		// Set up IRQ handler
 //		gpioSetISRFunc(ADLC_IRQ, FALLING_EDGE, ADLC_INTERRUPT_TIMEOUT, &gpio::irqHandler);
@@ -331,12 +331,18 @@ gpioWrite(TMPRW, PI_HIGH);
 	}
 
 	int getClockSpeed(void) {
-		int seconds = 10;
+		int i, seconds;
 
+		seconds = 10;
 		numpulses = 0;
 		if (gpioSetISRFunc(CLKIN, FALLING_EDGE, seconds * 1000, getClockSpeed_inthandler) == 0) {
 			gpioWrite(CLKIN_EN, PI_LOW);
-			gpioSleep(PI_TIME_RELATIVE, seconds, 0);	// Count pulses for 3 seconds
+			for (i = 0; i < 10; i++) {
+				numpulses = 0;
+				delay(1000);	// Wait 1 second
+				printf("Clock frequency is %ul Hz\n", numpulses);
+			}
+//			gpioSleep(PI_TIME_RELATIVE, seconds, 0);	// Count pulses for 3 seconds
 			gpioWrite(CLKIN_EN, PI_HIGH);
 			gpioSetISRFunc(CLKIN, FALLING_EDGE, seconds * 1000, NULL);
 		} else {
