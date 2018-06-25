@@ -77,10 +77,6 @@ namespace econet {
 		if (frame->status || ECONET_FRAME_INVALID) {
 			return false;
 		} else {
-//			frame->dst_network = frame->data[0];
-//			frame->dst_station = frame->data[1];
-//			frame->src_network = frame->data[2];
-//			frame->src_station = frame->data[3];
 			frame->port = frame->data[4];
 			if ((frame->dst_network | frame->dst_station) == 0xFF)
 				frame->status |= ECONET_FRAME_BROADCAST;

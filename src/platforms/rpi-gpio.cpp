@@ -339,8 +339,9 @@ gpioWrite(TMPRW, PI_HIGH);
 			gpioWrite(CLKIN_EN, PI_LOW);
 			for (i = 0; i < 10; i++) {
 				numpulses = 0;
-				delay(1000);	// Wait 1 second
-				printf("Clock frequency is %ul Hz\n", numpulses);
+				gpioSleep(PI_TIME_RELATIVE, seconds, 0);
+//				delay(1000);	// Wait 1 second
+//				printf("Clock frequency is %ul Hz\n", numpulses);
 			}
 //			gpioSleep(PI_TIME_RELATIVE, seconds, 0);	// Count pulses for 3 seconds
 			gpioWrite(CLKIN_EN, PI_HIGH);
