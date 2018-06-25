@@ -33,11 +33,23 @@ namespace econet {
 		unsigned char station;
 	} Station;
 
-	typedef struct {
-		unsigned char status;
-		unsigned char dst_network, dst_station, src_network, src_station, control, port; // Must make this a union with data[] someday
+//	typedef struct {
+//		unsigned char status;
+//		unsigned char dst_network, dst_station, src_network, src_station, control, port; // Must make this a union with data[] someday
+//		unsigned char data[ECONET_MAX_FRAMESIZE];
+//	} Frame;
+
+	union Frame {
 		unsigned char data[ECONET_MAX_FRAMESIZE];
-	} Frame;
+		struct {
+			unsigned char dst_network;
+			unsigned char dst_sation;
+			unsigned char src_network;
+			unsigned char src_station;
+		};
+		unsigned char control;
+		unsigned char port;
+	} frame;
 
 	typedef struct {
 		unsigned long timeout;		// When this session will timeout (in Unix time)
