@@ -78,7 +78,7 @@ namespace rpi_gpio {
 		gpioSetMode(ADLC_A1, PI_OUTPUT);
 		gpioSetMode(ADLC_CS, PI_OUTPUT);
 		gpioSetMode(ADLC_RW, PI_OUTPUT);
-		gpioSetMode(ADLC_RST, PI_INPUT);
+		gpioSetMode(ADLC_RST, PI_OUTPUT);
 		gpioSetMode(ADLC_IRQ, PI_INPUT);
 gpioSetMode(TMPRW, PI_OUTPUT);
 
