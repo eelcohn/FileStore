@@ -6,5 +6,6 @@ make clean
 ./configure
 [ $? -eq 0 ] || exit $?
 make
+make install
 cd ..
 

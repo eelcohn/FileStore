@@ -4,14 +4,13 @@
  * (c) Eelco Huininga 2017-2018
  */
 
-#include <cstdio>		// prinf()
 #include "platforms/platform.h"
 
 using namespace std;
 
 
 
-namespace commands {
+namespace netfs {
 	int access(char **args) {
 		return(0);
 	}
@@ -29,11 +28,6 @@ namespace commands {
 	}
 
 	int i_am(char **args) {
-		return(0);
-	}
-
-	int clockspeed(char **args) {
-		printf("Measured clockspeed is %i Hz\n", api::getClockSpeed());
 		return(0);
 	}
 }

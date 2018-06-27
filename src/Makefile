@@ -26,7 +26,7 @@ CFLAGS = -g -Wall -O3 -std=c++11
 INCLUDES = .
 
 # define library paths in addition to /usr/lib
-LDFLAGS = .
+LDFLAGS = ./pigpio/
 
 # define any libraries to link into executable:
 LIBS =	-lcrypt \
@@ -41,31 +41,15 @@ LIBS =	-lcrypt \
 MAIN_SRCS = \
 	main.cpp \
 	aun.cpp \
+	cli.cpp \
 	debug.cpp \
 	dtls.cpp \
 	econet.cpp \
 	errorhandler.cpp \
 	netfs.cpp \
+	settings.cpp \
 	stations.cpp \
 	users.cpp \
-	commands/commands.cpp \
-	commands/star_clock.cpp \
-	commands/star_configure.cpp \
-	commands/star_date.cpp \
-	commands/star_discs.cpp \
-	commands/star_dismount.cpp \
-	commands/star_exit.cpp \
-	commands/star_help.cpp \
-	commands/star_mount.cpp \
-	commands/star_netmon.cpp \
-	commands/star_newuser.cpp \
-	commands/star_notify.cpp \
-	commands/star_pass.cpp \
-	commands/star_printtest.cpp \
-	commands/star_priv.cpp \
-	commands/star_remuser.cpp \
-	commands/star_time.cpp \
-	commands/star_users.cpp \
 	platforms/linux.cpp \
 	platforms/rpi-gpio.cpp
 
@@ -78,8 +62,8 @@ OBJS		= $(MAIN_SRCS:.cpp=.o)
 CLIENT_OBJS	= $(CLIENT_SRCS:.cpp=.o)
 
 # define the executable file
-MAIN	= ../FileStore
-CLIENT	= ../client
+MAIN	= FileStore
+CLIENT	= client
 
 # --------------------------------------------------------------------------- #
 # Define the OpenSSL parameters                                               #
@@ -122,6 +106,16 @@ $(CLIENT): $(CLIENT_OBJS)
 	@echo Linking $(CLIENT)...
 	$(CC) $(CFLAGS) -I$(INCLUDES) -o $(CLIENT) $(CLIENT_OBJS) -lssl -lcrypto
 
+install:
+	@echo Installing $(MAIN)...
+	@install -m 755 $(MAIN) ..
+	@strip ../$(MAIN)
+	@echo Installing $(CLIENT)...
+	@install -m 755 $(CLIENT) ..
+	@strip ../$(CLIENT)
+	@echo
+	@echo Done! Your Econet FileStore gateway server is installed.
+
 certs:
 	@echo Generating certificates...
 	@mkdir -p ../conf/keys/
@@ -156,6 +150,9 @@ help:
 	@echo Options
 	@echo "   make"
 	@echo "      Compile the sourcecode."
+	@echo ""
+	@echo "   make install"
+	@echo "      Install the compiled sourcecode."
 	@echo ""
 	@echo "   make clean"
 	@echo "      Remove all like object (.o) files and the compiled binaries (FileStore and client)."

@@ -16,7 +16,7 @@
 #include "aun.h"			// Included for pollAUN() thread
 #include "users.h"			// Included for users::loadUsers()
 #include "stations.h"			// Included for users::loadStations()
-#include "commands/commands.h"		// All * commands
+#include "cli.h"			// All * commands
 #include "platforms/platform.h"		// All platform- and hardware-dependant functions
 
 using namespace std;

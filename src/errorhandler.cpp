@@ -23,6 +23,6 @@ const char *errorMessages[][2] = {
 };
 
 void errorHandler(int errorNumber, const char *errorMessage) {
-	fprintf(stderr, configuration::onError, "Warning", errorNumber, errorMessage);
+	fprintf(stderr, (char *)settings::onError, "Warning", errorNumber, errorMessage);
 }
 

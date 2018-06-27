@@ -4,16 +4,16 @@
  * (c) Eelco Huininga 2017-2018
  */
 
-#include <cstdlib>			// Included for strtol()
-#include <cstring>			// Included for memcpy(), strlen()
-#include <ctime>			// Included for time(), tm
+#include <cstdlib>		// Included for strtol()
+#include <cstring>		// Included for memcpy(), strlen()
+#include <ctime>		// Included for time(), tm
 
-#include "main.h"			// Included for bye variable
-#include "platforms/platform.h"		// All high-level API calls
-#include "settings.h"			// Global configuration variables are defined here
-#include "econet.h"			// Header file for this code
-#include "aun.h"			// Included for aun::transmitFrame()
-#include "commands/commands.h"		// Included for commands::netmonPrintFrame()
+#include "main.h"		// Included for bye variable
+#include "platforms/platform.h"	// All high-level API calls
+#include "settings.h"		// Global configuration variables are defined here
+#include "econet.h"		// Header file for this code
+#include "aun.h"		// Included for aun::transmitFrame()
+#include "cli.h"		// Included for commands::netmonPrintFrame()
 
 using namespace std;
 
@@ -32,7 +32,7 @@ namespace econet {
 		while (bye == false) {
 			rx_length = api::receiveData(&frame);
 			if ((rx_length > 0) && (econet::netmon))
-				commands::netmonPrintFrame("eco  ", false, &frame, rx_length);
+				netmonPrintFrame("eco  ", false, &frame, rx_length);
 			if (econet::validateFrame((econet::Frame *) &frame, rx_length)) {
 				if (frame.status || ECONET_FRAME_TOLOCAL) {
 					/* Frame is addressed to a station on our local network */
@@ -46,7 +46,7 @@ namespace econet {
 					}
 				} else {
 					/* Frame is addressed to a station on another network */
-//					if ((configuration::relay_only_known_networks) && (econet::known_networks[frame.dst_network].network == 0)) {
+//					if ((settings::relay_only_known_networks) && (econet::known_networks[frame.dst_network].network == 0)) {
 						/* Don't relay the frame, but reply with &3A2 Not listening */
 //						econet::transmitFrame((econet::Frame *) &frame, rx_length);
 //					} else {
@@ -60,7 +60,7 @@ namespace econet {
 
 	void transmitFrame(econet::Frame *frame, int size) {
 		if (econet::netmon)
-			commands::netmonPrintFrame("eco  ", true, frame, size);
+			netmonPrintFrame("eco  ", true, frame, size);
 //		api::transmit(frame, size);
 	}
 
@@ -80,9 +80,9 @@ namespace econet {
 			frame->port = frame->data[4];
 			if ((frame->dst_network | frame->dst_station) == 0xFF)
 				frame->status |= ECONET_FRAME_BROADCAST;
-			if ((frame->dst_network == configuration::econet_network) || (frame->dst_network == 0x00)) {
+			if ((frame->dst_network == settings::econet_network) || (frame->dst_network == 0x00)) {
 				frame->status |= ECONET_FRAME_TOLOCAL;
-			if (frame->dst_station == configuration::econet_station) {
+			if (frame->dst_station == settings::econet_station) {
 				frame->status |= ECONET_FRAME_TOME;
 			}
 		}
@@ -109,8 +109,8 @@ namespace econet {
 
 		frame->data[0] = frame->src_network;
 		frame->data[1] = frame->src_station;
-		frame->data[2] = configuration::econet_network;
-		frame->data[3] = configuration::econet_station;
+		frame->data[2] = settings::econet_network;
+		frame->data[3] = settings::econet_station;
 
 		switch (frame->port) {
 			// &00 Immediate
@@ -254,13 +254,18 @@ namespace econet {
 
 					// &10: Read date/time
 					case 0x10 :
-						struct tm timeinfo;
+						struct tm *timeinfo;
+
+						time_t rawtime;
+						time(&rawtime);
+						timeinfo = localtime(&rawtime);
+
 						frame->data[5] = 0x00;	// Return code (0 = success)
-						frame->data[6] = timeinfo.tm_mday;
-						frame->data[7] = ((timeinfo.tm_year & 0x0F) << 4) || timeinfo.tm_mon;
-						frame->data[8] = timeinfo.tm_hour;
-						frame->data[9] = timeinfo.tm_min;
-						frame->data[10] = timeinfo.tm_sec;
+						frame->data[6] = timeinfo->tm_mday;
+						frame->data[7] = ((timeinfo->tm_year & 0x0F) << 4) || timeinfo->tm_mon;
+						frame->data[8] = timeinfo->tm_hour;
+						frame->data[9] = timeinfo->tm_min;
+						frame->data[10] = timeinfo->tm_sec;
 						break;
 
 					// &11: Read EOF (End Of File) information
@@ -367,7 +372,7 @@ namespace econet {
 				switch (frame->control) {
 					// &80 New bridge available on the network
 					case 0x80 :
-						if (configuration::econet_network == frame->src_network) {
+						if (settings::econet_network == frame->src_network) {
 							printf("Warning! Found another Econet network with the same network number as ours! Please check the configuration at station %i:%i\n", frame->src_network, frame->src_station);
 						} else {
 							// Add the new Econet network to our list of known networks
@@ -408,7 +413,7 @@ namespace econet {
 						if (size == 0x0E) {
 							/* Check if the requested servername matches wildcards (8 spaces) or our own servername */
 							for (i = 0; i < 6; i++) {
-								if ((frame->data[i] != 0x20) && (frame->data[i] != configuration::printername[i]))
+								if ((frame->data[i] != 0x20) && (frame->data[i] != settings::printername[i]))
 									break;
 							}
 							frame->data[0x05] = 0x9E;	// Set port number to FindServerReply
@@ -438,7 +443,7 @@ namespace econet {
 						if (size == 0x0E) {
 							/* Check if the requested servername matches wildcards (8 spaces) or our own servername */
 							for (i = 0; i < 8; i++) {
-								if ((frame->data[i] != 0x20) && (frame->data[i] != configuration::servername[i]))
+								if ((frame->data[i] != 0x20) && (frame->data[i] != settings::servername[i]))
 									break;
 							}
 							frame->data[0x05] = 0xB1;	// Set port number to FindServerReply
@@ -446,8 +451,8 @@ namespace econet {
 							frame->data[0x07] = 0xff;	// Further communications on this port number please
 							frame->data[0x08] = ((atoi(VERSION_MAJOR) << 4) | (atoi(VERSION_MINOR) & 0x0F));
 							memcpy(&frame->data[0x09], ECONET_SERVERTYPE, 8);	// Type of server
-							frame->data[0x11] = strlen((const char *)configuration::servername);
-							memcpy(&frame->data[0x12], configuration::servername, frame->data[0x0B]);
+							frame->data[0x11] = strlen((const char *)settings::servername);
+							memcpy(&frame->data[0x12], settings::servername, frame->data[0x0B]);
 							econet::transmitFrame(frame, (0x12 + frame->data[0x11]));	// Send reply back to client
 						} else {
 							frame->data[0x05] = 0xB1;	// Set port number to FindServerReply
@@ -455,8 +460,8 @@ namespace econet {
 							frame->data[0x07] = 0xff;	// Further communications on this port number please
 							frame->data[0x08] = ((atoi(VERSION_MAJOR) << 4) | (atoi(VERSION_MINOR) & 0x0F));
 							memcpy(&frame->data[0x09], ECONET_SERVERTYPE, 8);	// Type of server
-							frame->data[0x11] = strlen((const char *)configuration::servername);
-							memcpy(&frame->data[0x12], configuration::servername, frame->data[0x0B]);
+							frame->data[0x11] = strlen((const char *)settings::servername);
+							memcpy(&frame->data[0x12], settings::servername, frame->data[0x0B]);
 							econet::transmitFrame(frame, (0x12 + frame->data[0x11]));	// Send reply back to client
 							memcpy(&frame->data[0x12 + frame->data[0x11]], "Wrong frame size", 16);
 							econet::transmitFrame(frame, (0x12 + frame->data[0x11] + 17));	// Send reply back to client
@@ -515,15 +520,15 @@ namespace econet {
 		econet::Frame frame;
 
 		memmove((econet::Frame *) &frame, ECONET_BROADCAST_NEWBRIDGE, sizeof(ECONET_BROADCAST_NEWBRIDGE));
-		frame.data[0x02]	= configuration::econet_network;
-		frame.data[0x03]	= configuration::econet_station;
-		frame.data[0x06]	= configuration::aun_network;
+		frame.data[0x02]	= settings::econet_network;
+		frame.data[0x03]	= settings::econet_station;
+		frame.data[0x06]	= settings::aun_network;
 
 		econet::transmitFrame(&frame, sizeof(ECONET_BROADCAST_NEWBRIDGE));
 
-		frame.data[0x02]	= configuration::aun_network;
-		frame.data[0x03]	= configuration::aun_station;
-		frame.data[0x06]	= configuration::econet_network;
+		frame.data[0x02]	= settings::aun_network;
+		frame.data[0x03]	= settings::aun_station;
+		frame.data[0x06]	= settings::econet_network;
 
 		aun::transmitFrame((char *)"127.0.0.1", AUN_UDPPORT, &frame, sizeof(ECONET_BROADCAST_NEWBRIDGE));
 	#ifdef ECONET_WITHOPENSSL
@@ -536,13 +541,13 @@ namespace econet {
 		econet::Frame frame;
 
 		memmove((econet::Frame *) &frame, ECONET_BROADCAST_WHATNET, sizeof(ECONET_BROADCAST_WHATNET));
-		frame.data[0x02]	= configuration::econet_network;
-		frame.data[0x03]	= configuration::econet_station;
+		frame.data[0x02]	= settings::econet_network;
+		frame.data[0x03]	= settings::econet_station;
 
 		econet::transmitFrame(&frame, sizeof(ECONET_BROADCAST_WHATNET));
 
-		frame.data[0x02]	= configuration::aun_network;
-		frame.data[0x03]	= configuration::aun_station;
+		frame.data[0x02]	= settings::aun_network;
+		frame.data[0x03]	= settings::aun_station;
 
 		aun::transmitFrame((char *)"127.0.0.1", AUN_UDPPORT, &frame, sizeof(ECONET_BROADCAST_WHATNET));
 	#ifdef ECONET_WITHOPENSSL

@@ -4,15 +4,15 @@
  * (c) Eelco Huininga 2017-2018
  */
 
-#include <cstring>			// Included for memset() and memcpy()
-#include <unistd.h>			// Included for close()
+#include <cstring>		// Included for memset() and memcpy()
+#include <unistd.h>		// Included for close()
 
-#include "settings.h"			// Global configuration variables are defined here
+#include "settings.h"		// Global configuration variables are defined here
 #include "dtls.h"
-#include "econet.h"			// Included for Frame
-#include "aun.h"			// Header file for this code
-#include "main.h"			// Included for bye variable
-#include "commands/commands.h"		// Included for commands::netmonPrintFrame()
+#include "econet.h"		// Included for Frame
+#include "aun.h"		// Header file for this code
+#include "main.h"		// Included for bye variable
+#include "cli.h"		// Included for netmonPrintFrame()
 
 using namespace std;
 
@@ -67,7 +67,7 @@ namespace aun {
 			if ((rx_length = recvfrom(rx_sock, (econet::Frame *) &frame, sizeof(econet::Frame), 0, (struct sockaddr *) &addr_incoming, &slen)) > 0) {
 				valid = econet::validateFrame(&frame, rx_length);
 				if (econet::netmon == true) {
-					commands::netmonPrintFrame("eth", false, &frame, rx_length);
+					netmonPrintFrame("eth", false, &frame, rx_length);
 				}
 				if (valid) {
 					if (frame.status || ECONET_FRAME_TOLOCAL) {
@@ -118,7 +118,7 @@ namespace aun {
 		}
 
 		if (econet::netmon)
-			commands::netmonPrintFrame("eth", true, frame, tx_length);
+			netmonPrintFrame("eth", true, frame, tx_length);
 
 		if (sendto(tx_sock, (char *) &frame, sizeof(frame), 0, (struct sockaddr *) &addr_outgoing, slen) == -1) {
 			fprintf(stderr, "aun::transmitFrame: sendto() failed\n");
@@ -142,7 +142,7 @@ namespace aun {
 		socklen_t slen = sizeof(addr_incoming);
 
 		DTLSParams server;
-		SSL *ssl;
+//		SSL *ssl;
 
 		dtls_Begin();
 
@@ -192,8 +192,8 @@ namespace aun {
 		fflush(stdout);
 		while (bye == false) {
 			// Accept an incoming UDP packet (connection)
-//			int client = accept(rx_sock, (struct sockaddr*) &addr_incoming, &slen);
-			int client = SSL_accept(server.ssl);
+			int client = accept(rx_sock, (struct sockaddr*) &addr_incoming, &slen);
+//			int client = SSL_accept(server.ssl);
 			if (client < 0) {
 				perror("Unable to accept");
 				exit(EXIT_FAILURE);
@@ -211,7 +211,7 @@ namespace aun {
 				if ((rx_length = SSL_read(server.ssl, (econet::Frame *) &frame, sizeof(econet::Frame))) > 0) {
 					valid = econet::validateFrame(&frame, rx_length);
 					if (econet::netmon == true) {
-						commands::netmonPrintFrame("eth", false, &frame, rx_length);
+						netmonPrintFrame("eth", false, &frame, rx_length);
 					}
 					if (valid) {
 						if (frame.status || ECONET_FRAME_TOLOCAL) {
@@ -301,7 +301,7 @@ namespace aun {
 			if ((rx_length = recvfrom(rx_sock, (econet::Frame *) &frame, sizeof(econet::Frame), 0, (struct sockaddr *) &addr_incoming, &slen)) > 0) {
 				valid = econet::validateFrame(&frame, rx_length);
 				if (econet::netmon == true) {
-					commands::netmonPrintFrame("eth", false, &frame, rx_length);
+					netmonPrintFrame("eth", false, &frame, rx_length);
 				}
 				if (valid) {
 					if (frame.status || ECONET_FRAME_TOLOCAL) {

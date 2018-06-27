@@ -8,9 +8,7 @@ namespace debug {
 	void networkLogStart(void);
 	void networkLog(void);
 	void networkLogStop(void);
-}
 #ifdef DEBUGBUILD
-namespace debug {
 	int read(char **args);
 	int write(char **args);
 	int d(char **args);
@@ -19,6 +17,6 @@ namespace debug {
 	int cs(char **args);
 	int rst(char **args);
 	int phi(char **args);
-}
 #endif
+}
 

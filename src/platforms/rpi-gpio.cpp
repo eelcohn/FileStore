@@ -298,7 +298,7 @@ gpioWrite(TMPRW, PI_HIGH);
 				if (status && 0x80)
 					status = rpi_gpio::readRegister(2);	// Fetch last byte in receive buffer
 				if (frame->data[3] == 0)	// Replace local network (0) with our real network number
-					frame->data[3] = configuration::econet_network;
+					frame->data[3] = settings::econet_network;
 				result = i - 1;
 			} else
 				return(-1);	// No valid frame found
@@ -317,12 +317,12 @@ gpioWrite(TMPRW, PI_HIGH);
 		if (clockSpeed > MAX_CLOCKSPEED)
 			return (-1);
 		else
-			configuration::clockspeed = clockSpeed;
+			settings::clockspeed = clockSpeed;
 
 		if (dutyCycle > MAX_DUTYCYCLE)
 			return (-2);
 		else
-			configuration::dutycycle = dutyCycle;
+			settings::dutycycle = dutyCycle;
 
 		if (api::clockStarted == true)
 			rpi_gpio::startClock();
@@ -357,7 +357,7 @@ gpioWrite(TMPRW, PI_HIGH);
 	}
 
 	void startClock(void) {
-		gpioHardwarePWM(CLKOUT, configuration::clockspeed, (configuration::dutycycle * 10000));
+		gpioHardwarePWM(CLKOUT, settings::clockspeed, (settings::dutycycle * 10000));
 		gpioWrite(CLKOUT_EN, PI_HIGH);
 	}
 
