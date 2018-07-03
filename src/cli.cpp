@@ -355,9 +355,9 @@ void netmonPrintFrame(const char *interface, bool tx, econet::Frame *frame, int 
 		printf("Rx");
 
 	if (frame->status | ECONET_FRAME_INVALID)
-		strcpy(valid, "invalid");
+		strlcpy(valid, "invalid", sizeof(valid));
 	else
-		strcpy(valid, "valid  ");
+		strlcpy(valid, "valid  ", sizeof(valid));
 
 	printf("  %s  %s  dst=%02X:%02X  src=%02X:%02X  ctrl=%02X  port=%02X  size=%i bytes\n", interface, valid, frame->dst_network, frame->dst_station, frame->src_network, frame->src_station, frame->control, frame->port, size);
 
