@@ -205,7 +205,7 @@ namespace commands {
 				printf("Error: String too long\n");
 				return(0x000000FD);
 			} else {
-				strcpy((char *)settings::onError, args[2]);
+				strlcpy((char *)settings::onError, args[2], sizeof(settings::onError));
 				printf("ON ERROR handler set to %s\n", args[2]);
 			}
 		} else
