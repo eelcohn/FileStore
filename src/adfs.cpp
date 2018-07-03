@@ -22,9 +22,9 @@ void adfs::access(char *listspec, char *attributes) {
 void adfs::back(void) {
 	char temp[ADFS_MAX_PATHLENGTH];
 
-	strcpy(temp, csd);
-	strcpy(csd, psd);
-	strcpy(psd, temp);
+	strlcpy(temp, csd, sizeof(temp));
+	strlcpy(csd, psd, sizeof(csd));
+	strlcpy(psd, temp, sizeof(psd));
 }
 
 void adfs::cat(char *objspec) {
@@ -126,8 +126,8 @@ void adfs::delete(char *objspec) {
 }
 
 void adfs::dir(char *objspec) {
-	strcpy(psd, csd);
-	strcpy(csd, objspec);
+	strlcpy(psd, csd, sizeof(psd));
+	strlcpy(csd, objspec, sizeof(csd));
 }
 
 int adfs::mount(char *objspec) {
