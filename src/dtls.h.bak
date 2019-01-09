@@ -1,0 +1,33 @@
+#ifndef dtls_h_
+#define dtls_h_
+
+#include <stdbool.h>
+
+#include <openssl/err.h>
+#include <openssl/dh.h>
+#include <openssl/ssl.h>
+#include <openssl/conf.h>
+#include <openssl/engine.h>
+
+typedef struct {
+	SSL_CTX *ctx;
+	SSL *ssl;
+	DH *dh;
+	BIO *bio;
+	int socket;
+} DTLSParams;
+
+namespace dtls {
+	int	createSocket(int family, const char *address, unsigned short port);
+	int	closeSocket(int socket);
+	void	start();
+	void	stop();
+	int	initContextFromKeystore(DTLSParams* k, const char* keyname, int family, const char *address, unsigned short port);
+	int	initClient(DTLSParams* k, const char *address);
+	int	initServer(DTLSParams* k);
+	int	ssl_verify_peer(int preverify_ok, X509_STORE_CTX* ctx);
+	void	shutdown(DTLSParams* k);
+}
+
+#endif // dtls_h_
+

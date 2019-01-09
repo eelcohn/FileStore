@@ -1,0 +1,2 @@
+char	*strtoupper(char *s);
+

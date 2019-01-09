@@ -8,7 +8,7 @@ namespace debug {
 	void networkLogStart(void);
 	void networkLog(void);
 	void networkLogStop(void);
-#ifdef DEBUGBUILD
+#if (FILESTORE_DEBUG == 1) && (FILESTORE_ADAPTER == FILESTORE_ADAPTER_REMA)
 	int read(char **args);
 	int write(char **args);
 	int d(char **args);

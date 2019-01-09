@@ -1,0 +1,308 @@
+#define TLSPORT 33859
+
+#include <cstdio>
+#include <cstdlib>
+#include <unistd.h>			// close()
+#include <sys/socket.h>			// AF_INET, AF_INET6, SOCK_DGRAM, SOL_SOCKET, SO_REUSEADDR, SO_RCVTIMEO, setsockopt(), bind()
+#include <arpa/inet.h>			// inet_aton(), inet_pton()
+#include <netinet/in.h>			// Included for IPPROTO_UDP
+
+#include "dtls.h"
+
+using namespace std;
+
+
+
+namespace dtls {
+	/* Create a new socket */
+	int createSocket(int family, const char *address, unsigned short port) {
+		int sock;
+		int reuseconn;
+		struct timeval timeout;
+
+		/* Create a new socket */
+		if ((sock = socket(family, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
+			fprintf(stderr, "dtls::createSocket: Unable to create socket");
+			return -1;
+		}
+
+		/* Set socket to allow multiple connections */
+		reuseconn = 1;
+		if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char *)&reuseconn, sizeof(reuseconn)) == -1) {
+			fprintf(stderr, "dtls::createSocket: Error on setsockopt(SO_REUSEADDR)");
+			return -1;
+		}
+
+		/* Set timeout on socket to prevent recvfrom from blocking execution */
+		timeout.tv_sec = 0;
+		timeout.tv_usec = 100000;
+		if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) < 0) {
+			fprintf(stderr, "dtls::createSocket: Error setting timeout on socket");
+		}
+
+		switch (family) {
+			case AF_INET :
+				struct sockaddr_in addr;
+
+				addr.sin_family = AF_INET;
+				addr.sin_port = htons(port);
+				if (address == NULL)
+					addr.sin_addr.s_addr = htonl(INADDR_ANY);
+				else {
+					if (inet_pton(AF_INET, address, (void *)&addr.sin_addr.s_addr) != 1) {
+						fprintf(stderr, "dtls::createSocket: Invalid IPv4 address");
+						return -1;
+					}
+				}
+
+				if (bind(sock, (struct sockaddr*) &addr, sizeof(addr)) < 0) {
+					fprintf(stderr, "dtls::createSocket: IPv4 Unable to bind");
+					return -1;
+				}
+
+				break;
+
+			case AF_INET6 :
+				struct sockaddr_in6 addr6;
+
+				addr6.sin6_family = AF_INET6;
+				addr6.sin6_port = htons(port);
+				addr6.sin6_scope_id = 0;
+				if (address == NULL)
+					addr6.sin6_addr = in6addr_any;
+				else {
+					if (inet_pton(AF_INET6, address, (void *)&addr6.sin6_addr.s6_addr) != 1) {
+						fprintf(stderr, "dtls::createSocket: Invalid IPv6 address");
+						return -1;
+					}
+				}
+
+				if (bind(sock, (struct sockaddr*) &addr6, sizeof(addr6)) < 0) {
+					fprintf(stderr, "dtls::createSocket: IPv6 Unable to bind");
+					return -1;
+				}
+
+				break;
+
+			default :
+				fprintf(stderr, "dtls::createSocket: unknown protocol family");
+				return -1;
+		}
+
+		return sock;
+	}
+
+	/* Close a socket */
+	int closeSocket(int socket) {
+		return close(socket);
+	}
+
+	void start() {
+		SSL_library_init();
+		SSL_load_error_strings();
+		ERR_load_BIO_strings();
+		OpenSSL_add_all_algorithms();
+	}
+
+	void stop() {
+	#if (OPENSSL_VERSION_NUMBER < 0x10100000L)
+		ERR_remove_thread_state(NULL);
+	#endif
+		ENGINE_cleanup();
+		CONF_modules_unload(1);
+		ERR_free_strings();
+		EVP_cleanup();
+		sk_SSL_COMP_free(SSL_COMP_get_compression_methods());
+		CRYPTO_cleanup_all_ex_data();
+	}
+
+	int initContextFromKeystore(DTLSParams* params, const bool mode, int family, const char *address, unsigned short port) {
+		FILE *fp_dhparams;
+		int result = 0;
+
+		/* Load Diffie-Hellman parameters */
+		fp_dhparams = fopen("./conf/dh2048.pem", "r");
+		if (fp_dhparams == NULL) {
+			fprintf(stderr, "dtls::initContextFromKeystore: Error opening the DH file.\n");
+			return EXIT_FAILURE;
+		}
+printf("DH loaded\n");
+		params->dh = PEM_read_DHparams(fp_dhparams, NULL, NULL, NULL);
+		fclose(fp_dhparams);
+
+		if (params->dh == NULL) {
+			fprintf(stderr, "dtls::initContextFromKeystoreError: Error reading the DH file\n");
+			return EXIT_FAILURE;
+		}
+
+		/* Create a socket */
+		params->socket = createSocket(family, address, port);
+
+		/* Create the BIO */
+		params->bio = BIO_new_dgram(params->socket, BIO_NOCLOSE);
+		if (params->bio == NULL) {
+			fprintf(stderr, "dtls::initContextFromKeystoreError: error creating bio\n");
+			return EXIT_FAILURE;
+		}
+
+		// Create a new context using DTLS
+#if (OPENSSL_VERSION_NUMBER < 0x10100000L)
+		if ((params->ctx = SSL_CTX_new(DTLSv1_2_method())) == NULL) {
+			fprintf(stderr, "dtls::initContextFromKeystoreError: cannot create SSL_CTX.\n");
+			ERR_print_errors_fp(stderr);
+			return -1;
+		}
+#else
+		if ((params->ctx = SSL_CTX_new(DTLS_method())) == NULL) {
+			fprintf(stderr, "dtls::initContextFromKeystoreError: cannot create SSL_CTX.\n");
+			ERR_print_errors_fp(stderr);
+			return -1;
+		}
+		if (SSL_CTX_set_min_proto_version(params->ctx, DTLS1_2_VERSION) != 1) {
+			fprintf(stderr, "Warning: dtls::initContextFromKeystoreError: cannot set minimum supported protocol version\n");
+		} 
+#endif
+
+		// Set our supported ciphers
+		result = SSL_CTX_set_cipher_list(params->ctx, "ALL:!ADH:!LOW:!EXP:!MD5:!SSL2:!SSL3:@STRENGTH");
+		if (result != 1) {
+			fprintf(stderr, "dtls::initContextFromKeystoreError: cannot set the cipher list.\n");
+			ERR_print_errors_fp(stderr);
+			return -2;
+		}
+
+		// Set Diffie-Hellman parameters
+		result = SSL_CTX_set_tmp_dh(params->ctx, params->dh);
+		if (result != 1) {
+			fprintf(stderr, "dtls::initContextFromKeystoreError: SSL_CTX_set_tmp_dh().\n");
+			ERR_print_errors_fp(stderr);
+			return -2;
+		}
+params->ssl = SSL_new(params->ctx);
+if (params->ssl == NULL) {
+			fprintf(stderr, "dtls::initContextFromKeystoreError: SSL_CTX_set_tmp_dh().\n");
+			ERR_print_errors_fp(stderr);
+	return EXIT_FAILURE;
+}
+
+SSL_set_bio(params->ssl, params->bio, params->bio);
+SSL_set_accept_state(params->ssl);
+
+
+		// The client doesn't have to send it's certificate
+		SSL_CTX_set_verify(params->ctx, SSL_VERIFY_PEER, dtls::ssl_verify_peer);
+
+		// Load key and certificate
+		char certfile[1024];
+		char keyfile[1024];
+		sprintf(certfile, "./conf/keys/%s.cert", keyname);
+		sprintf(keyfile, "./conf/keys/%s.key", keyname);
+
+		// Load the certificate file; contains also the public key
+		result = SSL_CTX_use_certificate_file(params->ctx, certfile, SSL_FILETYPE_PEM);
+		if (result != 1) {
+			fprintf(stderr, "dtls::initContextFromKeystoreError: cannot load certificate file.\n");
+			ERR_print_errors_fp(stderr);
+			return -4;
+		}
+
+		// Load private key
+		result = SSL_CTX_use_PrivateKey_file(params->ctx, keyfile, SSL_FILETYPE_PEM);
+		if (result != 1) {
+			fprintf(stderr, "dtls::initContextFromKeystoreError: cannot load private key file.\n");
+			ERR_print_errors_fp(stderr);
+			return -5;
+		}
+
+		// Check if the private key is valid
+		result = SSL_CTX_check_private_key(params->ctx);
+		if (result != 1) {
+			fprintf(stderr, "dtls::initContextFromKeystoreError: checking the private key failed. \n");
+			ERR_print_errors_fp(stderr);
+			return -6;
+		}
+printf("initContextFromKeystore exit\n");
+		return 0;
+	}
+
+	int initClient(DTLSParams* params, const char *address) {
+		params->bio = BIO_new_ssl_connect(params->ctx);
+		if (params->bio == NULL) {
+			fprintf(stderr, "dtls::initClient: error connecting to server\n");
+			return -1;
+		}
+
+		BIO_set_conn_hostname(params->bio, address);
+		BIO_get_ssl(params->bio, &(params->ssl));
+		if (params->ssl == NULL) {
+			fprintf(stderr, "dtls::initClient: BIO_get_ssl error\n");
+			return -1;
+		}
+
+		SSL_set_connect_state(params->ssl);
+		SSL_set_mode(params->ssl, SSL_MODE_AUTO_RETRY);
+
+		return 0;
+	}
+
+	int initServer(DTLSParams* params) {
+		params->bio = BIO_new_ssl_connect(params->ctx);
+		if (params->bio == NULL) {
+			fprintf(stderr, "dtls::initServer: error connecting with BIOs\n");
+			return -1;
+		}
+
+		BIO_get_ssl(params->bio, &(params->ssl));
+		if (params->ssl == NULL) {
+			fprintf(stderr, "dtls::initServer: BIO_get_ssl error\n");
+			return -1;
+		}
+
+		SSL_set_accept_state(params->ssl);
+
+		return 0;
+	}
+
+	int ssl_verify_peer(int preverify_ok, X509_STORE_CTX* x509_ctx) {
+		X509* cert;
+		char  buf[300];
+
+		cert = X509_STORE_CTX_get_current_cert(x509_ctx);
+		X509_NAME_oneline(X509_get_subject_name(cert), buf, sizeof(buf));
+		printf("dtls::ssl_verify_peer: subject= %s\n", buf);
+
+		if (preverify_ok == 1) {
+			printf("dtls::ssl_verify_peer: Verification passed.\n");
+		} else {
+			int err = X509_STORE_CTX_get_error(x509_ctx);
+			printf("dtls::ssl_verify_peer: Verification failed: %s.\n", X509_verify_cert_error_string(err));
+		}
+
+		return 1;
+	}
+
+	void shutdown(DTLSParams* params) {
+		if (params != NULL) {
+			if (params->ctx != NULL) {
+				SSL_CTX_free(params->ctx);
+				params->ctx = NULL;
+			}
+
+			if (params->ssl != NULL) {
+				SSL_free(params->ssl);
+				params->ssl = NULL;
+			}
+
+			if (params->bio != NULL) {
+				BIO_free(params->bio);
+				params->bio = NULL;
+			}
+
+			if (params->dh != NULL) {
+				DH_free(params->dh);
+				params->dh = NULL;
+			}
+		}
+	}
+}
+

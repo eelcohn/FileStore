@@ -16,11 +16,11 @@
 /* Initialize SIGNAL handlers */
 void initSignals(void) {
 	if (signal(SIGHUP, sigHandler) == SIG_ERR)
-		errorHandler(0xFFFFFFFF, "Can't catch SIGHUP");
+		errorHandler(0xC0000002);
 	if (signal(SIGINT, sigHandler) == SIG_ERR)
-		errorHandler(0xFFFFFFFF, "Can't catch SIGINT");
+		errorHandler(0xC0000003);
 	if (signal(SIGTERM, sigHandler) == SIG_ERR)
-		errorHandler(0xFFFFFFFF, "Can't catch SIGTERM");
+		errorHandler(0xC0000004);
 }
 
 /* Signal handler */
@@ -59,12 +59,12 @@ void sigHandler(int sig) {
 int print(char *buffer)
 {
 //	FILE *printer = popen("/usr/bin/lpr -P PDF", "w");
-	FILE *printer = popen("/usr/bin/lpr", "w");
+	FILE *printer = popen("lpr", "w");
 
 	if (printer == NULL)
 		return (-1);
 
-	fprintf(printer, "%s", buffer);
+	fputs(buffer, printer);
 	pclose(printer);
 
 	return(0);

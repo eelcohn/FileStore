@@ -1,7 +1,7 @@
 # --------------------------------------------------------------------------- #
 # Econet FileStore server and gateway                                         #
 #                                                                             #
-# (c) Eelco Huininga 2017-2018                                                #
+# (c) Eelco Huininga 2017-2019                                                #
 # --------------------------------------------------------------------------- #
 
 # --------------------------------------------------------------------------- #
@@ -20,64 +20,44 @@ CC = g++
 #  -std=c++11    turns on compiler and library support for the 2011 C++       #
 #                standard (needed for thread support)                         #
 # --------------------------------------------------------------------------- #
-CFLAGS = -g -Wall -O3 -std=c++11
+CFLAGS = -g -O2 -std=c++11 -Wall -Wextra -Wpedantic
 
 # define any directories containing header files other than /usr/include
-INCLUDES = .
+INCLUDES = 
 
 # define library paths in addition to /usr/lib
-LDFLAGS = ./pigpio/
+LDFLAGS = 
 
 # define any libraries to link into executable:
-LIBS =	-lcrypt \
-	-lcrypto \
-	-lcurses \
-	-lpigpio \
-	-lpthread \
-	-lrt \
-	-lssl
+LIBS =	 -lpthread -lreadline -lcrypto -lssl
 
 # define the C source files
 MAIN_SRCS = \
 	main.cpp \
+	adfs.cpp \
 	aun.cpp \
 	cli.cpp \
 	debug.cpp \
-	dtls.cpp \
 	econet.cpp \
 	errorhandler.cpp \
+	fs_native.cpp \
 	netfs.cpp \
 	settings.cpp \
 	stations.cpp \
 	users.cpp \
 	platforms/linux.cpp \
-	platforms/rpi-gpio.cpp
-
-CLIENT_SRCS = \
-	client.cpp \
-	dtls.cpp
+	platforms/strlcpy.cpp \
+	platforms/strtoupper.cpp \
+	platforms/kbhit.cpp \
+	platforms/adapters/none.cpp
 
 # define the C object files
-OBJS		= $(MAIN_SRCS:.cpp=.o)
-CLIENT_OBJS	= $(CLIENT_SRCS:.cpp=.o)
+OBJS	= $(MAIN_SRCS:.cpp=.o)
 
 # define the executable file
 MAIN	= FileStore
-CLIENT	= client
-
-# --------------------------------------------------------------------------- #
-# Define the OpenSSL parameters                                               #
-# --------------------------------------------------------------------------- #
-OPENSSL_KEYSIZE		= 4096
-# Switch to EC curve x25519 once OpenSSL 1.1.0 is released
-OPENSSL_ECDHCURVE	= x25519
-OPENSSL_EXPIRE		= 3650
-OPENSSL_CA_DIR		= ../conf/keys/
-OPENSSL_SUBJ		= "/C=UK/ST=Cambridgeshire/L=Cambridge/O=Acorn"
-CLIENT_KEY		= client.key
-CLIENT_CERT		= client.cert
-SERVER_KEY		= server.key
-SERVER_CERT		= server.cert
+MAIN_LINK	= main_link
+CERTS	= certs
 
 
 
@@ -92,56 +72,54 @@ SERVER_CERT		= server.cert
 # manual section about automatic variables)                                   #
 # --------------------------------------------------------------------------- #
 %.o: %.cpp
-	$(CC) $(CFLAGS) -I$(INCLUDES) -c $< -o $@
+	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
-all:	$(MAIN) $(CLIENT) certs
+all:	$(MAIN) $(MAIN_LINK) $(CERTS)
 	@echo
 	@echo Done! Your Econet FileStore gateway server is compiled.
 	
 $(MAIN): $(OBJS)
-	@echo Linking $(MAIN)...
-	$(CC) $(CFLAGS) -I$(INCLUDES) -o $(MAIN) $(OBJS) -L$(LDFLAGS) $(LIBS)
 
-$(CLIENT): $(CLIENT_OBJS)
-	@echo Linking $(CLIENT)...
-	$(CC) $(CFLAGS) -I$(INCLUDES) -o $(CLIENT) $(CLIENT_OBJS) -lssl -lcrypto
+main_link:
+	@echo Linking $(MAIN)...
+	$(CC) $(CFLAGS) $(INCLUDES) -o $(MAIN) $(OBJS) $(LDFLAGS) $(LIBS)
 
 install:
 	@echo Installing $(MAIN)...
 	@install -m 755 $(MAIN) ..
 	@strip ../$(MAIN)
-	@echo Installing $(CLIENT)...
-	@install -m 755 $(CLIENT) ..
-	@strip ../$(CLIENT)
 	@echo
 	@echo Done! Your Econet FileStore gateway server is installed.
 
 certs:
-	@echo Generating certificates...
-	@mkdir -p ../conf/keys/
-	@if [ ! -f ${OPENSSL_CA_DIR}/${CLIENT_CERT} ]; then \
-		openssl req -x509 -sha512 -newkey rsa:${OPENSSL_KEYSIZE} -days ${OPENSSL_EXPIRE} -nodes -subj ${OPENSSL_SUBJ} -keyout ${OPENSSL_CA_DIR}/${CLIENT_KEY} -out ${OPENSSL_CA_DIR}/${CLIENT_CERT} ; \
+	@mkdir -p "../conf/keys/"
+	@if [ ! -f ../conf/keys//client.cert ]; then \
+		echo Generating server certificate... ; \
+		openssl req -x509 -SHA512 -newkey rsa:4096 -days 3650 -nodes -subj "/C=UK/ST=Cambridgeshire/L=Cambridge/O=Acorn" -keyout ../conf/keys//server.key -out ../conf/keys//server.cert ; \
 	fi
-#	@openssl req -x509 -sha512 -newkey ec -pkeyopt ec_paramgen_curve:${OPENSSL_ECDHCURVE} -days ${OPENSSL_EXPIRE} -nodes -subj ${OPENSSL_SUBJ} -keyout ${OPENSSL_CA_DIR}/${CLIENT_KEY} -out ${OPENSSL_CA_DIR}/${CLIENT_CERT}
-	@chmod 600 ${OPENSSL_CA_DIR}/${CLIENT_KEY}
-	@chmod 600 ${OPENSSL_CA_DIR}/${CLIENT_CERT}
-#	@openssl req -x509 -sha512 -newkey ec -pkeyopt ec_paramgen_curve:${OPENSSL_ECDHCURVE} -days ${OPENSSL_EXPIRE} -nodes -subj ${OPENSSL_SUBJ} -keyout ${OPENSSL_CA_DIR}/${SERVER_KEY} -out ${OPENSSL_CA_DIR}/${SERVER_CERT}
-	@if [ ! -f ${OPENSSL_CA_DIR}/${SERVER_CERT} ]; then \
-		openssl req -x509 -sha512 -newkey rsa:${OPENSSL_KEYSIZE} -days ${OPENSSL_EXPIRE} -nodes -subj ${OPENSSL_SUBJ} -keyout ${OPENSSL_CA_DIR}/${SERVER_KEY} -out ${OPENSSL_CA_DIR}/${SERVER_CERT} ; \
+	@chmod 600 ../conf/keys//server.key
+	@chmod 600 ../conf/keys//server.cert
+	@if [ ! -f ../conf/keys//client.cert ]; then \
+		echo Generating client certificate... ; \
+		openssl req -x509 -SHA512 -newkey rsa:4096 -days 3650 -nodes -subj "/C=UK/ST=Cambridgeshire/L=Cambridge/O=Acorn" -keyout ../conf/keys//client.key -out ../conf/keys//client.cert ; \
 	fi
-	@chmod 600 ${OPENSSL_CA_DIR}/${SERVER_KEY}
-	@chmod 600 ${OPENSSL_CA_DIR}/${SERVER_CERT}
+	@chmod 600 ../conf/keys//client.key
+	@chmod 600 ../conf/keys/client.cert
 
 clean:
-	$(RM) $(OBJS) $(MAIN) config.h
-	$(RM) $(CLIENT_OBJS) $(CLIENT)
-	$(RM) *~
+	@$(RM) $(OBJS) $(MAIN) config.h
+	@$(RM) *~
+	@$(RM) -rf autom4te.cache
+	@$(RM) config.log config.h config.status
 
 certclean:
-	$(RM) ${OPENSSL_CA_DIR}/${SERVER_KEY} ${OPENSSL_CA_DIR}/${SERVER_CERT}
-	$(RM) ${OPENSSL_CA_DIR}/${CLIENT_KEY} ${OPENSSL_CA_DIR}/${CLIENT_CERT}
+	@$(RM) ../conf/keys//server.key ../conf/keys//server.cert
+	@$(RM) ../conf/keys//client.key ../conf/keys//client.cert
 
-cleanall: clean certclean
+dependclean:
+	cd pigpio && $(MAKE) clean
+
+cleanall: clean certclean dependclean
 
 depend: $(MAIN_SRCS)
 	makedepend $(INCLUDES) $^

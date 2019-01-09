@@ -1,0 +1,134 @@
+# --------------------------------------------------------------------------- #
+# Econet FileStore debug client                                               #
+#                                                                             #
+# (c) Eelco Huininga 2017-2018                                                #
+# --------------------------------------------------------------------------- #
+
+# --------------------------------------------------------------------------- #
+# First we'll set all the variables                                           #
+# --------------------------------------------------------------------------- #
+# Define which compiler we want to use                                        #
+# --------------------------------------------------------------------------- #
+CC = g++
+
+# --------------------------------------------------------------------------- #
+# Set the compiler flags:                                                     #
+#  -g            adds debugging information to the executable file            #
+#  -Wall         turns on most, but not all, compiler warnings                #
+#  -Wall -Wextra turns on almost all compiler warnings                        #
+#  -O2           do some code optimizations when compiling                    #
+#  -std=c++11    turns on compiler and library support for the 2011 C++       #
+#                standard (needed for thread support)                         #
+# --------------------------------------------------------------------------- #
+CFLAGS = -g -O3 -std=c++11 -Wall -Wextra
+
+# define any directories containing header files other than /usr/include
+INCLUDES = .
+
+# define library paths in addition to /usr/lib
+LDFLAGS = .
+
+# define any libraries to link into executable:
+LIBS =	-lcrypto \
+	-lssl
+
+# define the C source files
+CLIENT_SRCS = \
+	client.cpp \
+	../dtls.cpp
+
+# define the C object files
+CLIENT_OBJS	= $(CLIENT_SRCS:.cpp=.o)
+
+# define the executable file
+CLIENT	= client
+
+# --------------------------------------------------------------------------- #
+# Define the OpenSSL parameters                                               #
+# --------------------------------------------------------------------------- #
+OPENSSL_KEYSIZE		= 4096
+# Switch to EC curve x25519 once OpenSSL 1.1.0 is released
+OPENSSL_ECDHCURVE	= x25519
+OPENSSL_EXPIRE		= 3650
+OPENSSL_CA_DIR		= ../conf/keys/
+OPENSSL_SUBJ		= "/C=UK/ST=Cambridgeshire/L=Cambridge/O=Acorn"
+CLIENT_KEY		= client.key
+CLIENT_CERT		= client.cert
+SERVER_KEY		= server.key
+SERVER_CERT		= server.cert
+
+
+
+# --------------------------------------------------------------------------- #
+# The following part of the makefile is generic; it can be used to            #
+# build any executable just by changing the definitions above and by          #
+# deleting dependencies appended to the file from 'make depend'               #
+# --------------------------------------------------------------------------- #
+# this is a suffix replacement rule for building .o's from .c's it uses       #
+# automatic variables $<: the name of the prerequisite of the rule(a .c file) #
+# and $@: the name of the target of the rule (a .o file) (see the gnu make    #
+# manual section about automatic variables)                                   #
+# --------------------------------------------------------------------------- #
+%.o: %.cpp
+	$(CC) $(CFLAGS) -I$(INCLUDES) -c $< -o $@
+
+all:	$(CLIENT) cert
+	@echo
+	@echo Done! Your Econet FileStore debug client is compiled.
+	
+$(CLIENT): $(CLIENT_OBJS)
+	@echo Linking $(CLIENT)...
+	$(CC) $(CFLAGS) -I$(INCLUDES) -o $(CLIENT) $(CLIENT_OBJS) -lssl -lcrypto
+
+install:
+	@echo Installing $(CLIENT)...
+	@install -m 755 $(CLIENT) ..
+	@strip ../$(CLIENT)
+	@echo
+	@echo Done! Your Econet FileStore debug client is installed.
+
+cert:
+	@echo Generating certificate...
+	@mkdir -p ../conf/keys/
+	@if [ ! -f ${OPENSSL_CA_DIR}/${CLIENT_CERT} ]; then \
+		openssl req -x509 -sha512 -newkey rsa:${OPENSSL_KEYSIZE} -days ${OPENSSL_EXPIRE} -nodes -subj ${OPENSSL_SUBJ} -keyout ${OPENSSL_CA_DIR}/${CLIENT_KEY} -out ${OPENSSL_CA_DIR}/${CLIENT_CERT} ; \
+	fi
+#	@openssl req -x509 -sha512 -newkey ec -pkeyopt ec_paramgen_curve:${OPENSSL_ECDHCURVE} -days ${OPENSSL_EXPIRE} -nodes -subj ${OPENSSL_SUBJ} -keyout ${OPENSSL_CA_DIR}/${CLIENT_KEY} -out ${OPENSSL_CA_DIR}/${CLIENT_CERT}
+	@chmod 600 ${OPENSSL_CA_DIR}/${CLIENT_KEY}
+	@chmod 600 ${OPENSSL_CA_DIR}/${CLIENT_CERT}
+
+clean:
+	@$(RM) $(CLIENT_OBJS) $(CLIENT) config.h
+	@$(RM) *~
+
+certclean:
+	$(RM) ${OPENSSL_CA_DIR}/${CLIENT_KEY} ${OPENSSL_CA_DIR}/${CLIENT_CERT}
+
+cleanall: clean certclean
+
+depend: $(MAIN_SRCS)
+	makedepend $(INCLUDES) $^
+
+help:
+	@echo Options
+	@echo "   make"
+	@echo "      Compile the sourcecode."
+	@echo ""
+	@echo "   make install"
+	@echo "      Install the compiled sourcecode."
+	@echo ""
+	@echo "   make clean"
+	@echo "      Remove all like object (.o) files and the compiled binaries (FileStore and client)."
+	@echo ""
+	@echo "   make cleanall"
+	@echo "      Remove all object (.o) files, certificates and keys (.key and .cert) and the compiled binaries (FileStore and client)."
+	@echo ""
+	@echo "   make clean"
+	@echo "      Remove all certificates and keys (.key and .cert)."
+	@echo ""
+	@echo "   make cert"
+	@echo "      Generate new certificate and private key pairs for the FileStore server and the debugging client."
+	@echo ""
+	@echo "   make help"
+	@echo "      Show this help screen."
+

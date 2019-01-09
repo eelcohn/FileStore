@@ -28,7 +28,7 @@ namespace debug {
 	}
 }
 
-#ifdef DEBUGBUILD
+#if (FILESTORE_DEBUG == 1) && (FILESTORE_ADAPTER == FILESTORE_ADAPTER_REMA)
 	// Temporary include for debugging purposes (D00, D01 ... D80 etc)
 #include <cstdlib>			// Included for strtol() and exit()
 #include <cstring>			// Included for strcmp()

@@ -1,7 +1,7 @@
 /* ethernet.cpp
  * All Ethernet send and receive functions
  *
- * (c) Eelco Huininga 2017-2018
+ * (c) Eelco Huininga 2017-2019
  */
 
 #include <cstring>			// Included for memset() and memcpy()

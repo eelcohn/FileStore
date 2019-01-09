@@ -1,7 +1,7 @@
 /* cli.h
  * Handler for all Command Line Interpreter commands
  *
- * (c) Eelco Huininga 2017-2018
+ * (c) Eelco Huininga 2017-2019
  */
 
 #ifndef ECONET_CLI_HEADER
@@ -11,32 +11,58 @@
 
 #define BUFFER_LENGTH	128
 
-extern const char	*cmds[][2];
-extern int		(*cmds_jumptable[]) (char **);
+//typedef int filestore_icpfunc_t (char **);
 
-namespace commands {
-	int clock(char **args);
-	int clockspeed(char **args);
-	int configure(char **args);
-	int date(char **args);
-	int discs(char **args);
-	int dismount(char **args);
-	int exit(char **args);
-	int help(char **args);
-	int mount(char **args);
-	int netmon(char **args);
-	int newuser(char **args);
-	int notify(char **args);
-	int pass(char **args);
-	int printtest(char **args);
-	int priv(char **args);
-	int remuser(char **args);
-	int star_time(char **args);
-	int users(char **args);
+typedef struct {
+//	filestore_icpfunc_t  *function;
+	int		(*function)(int, char **);
+	const char	*module;
+	const char	*command;
+	const char	*help;
+} Command;
+
+//extern const char	*cmds[][4];
+//extern int		(*cmds_jumptable[]) (char **);
+extern Command commands[];
+
+namespace cli {
+	extern unsigned int user_id;
+
+	int access(int argv, char **args);
+	int cat(int argv, char **args);
+	int cdir(int argv, char **args);
+	int clock(int argv, char **args);
+	int clockspeed(int argv, char **args);
+	int configure(int argv, char **args);
+	int date(int argv, char **args);
+	int del(int argv, char **args);
+	int discs(int argv, char **args);
+	int dismount(int argv, char **args);
+	int ex(int argv, char **args);
+	int exit(int argv, char **args);
+	int help(int argv, char **args);
+	int info(int argv, char **args);
+	int login(int argv, char **args);
+	int logout(int argv, char **args);
+	int mount(int argv, char **args);
+	int netmon(int argv, char **args);
+	int newuser(int argv, char **args);
+	int notify(int argv, char **args);
+	int pass(int argv, char **args);
+	int printtest(int argv, char **args);
+	int priv(int argv, char **args);
+	int remuser(int argv, char **args);
+	int rename(int argv, char **args);
+	int sessions(int argv, char **args);
+	int star_time(int argv, char **args);
+	int stations(int argv, char **args);
+	int users(int argv, char **args);
+	char **command_completion(const char *text, int start, int end);
+	char *command_generator(const char *text, int state);
+	int getPassword(const char *prompt, char *password, size_t pwlen);
 }
 
 void netmonPrintFrame(const char *interface, bool tx, econet::Frame *frame, int size);
-bool kbhit(void);
-int totalNumOfCommands(void);
+size_t totalNumOfCommands(void);
 #endif
 

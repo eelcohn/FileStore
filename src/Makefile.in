@@ -1,7 +1,7 @@
 # --------------------------------------------------------------------------- #
 # Econet FileStore server and gateway                                         #
 #                                                                             #
-# (c) Eelco Huininga 2017-2018                                                #
+# (c) Eelco Huininga 2017-2019                                                #
 # --------------------------------------------------------------------------- #
 
 # --------------------------------------------------------------------------- #
@@ -9,7 +9,7 @@
 # --------------------------------------------------------------------------- #
 # Define which compiler we want to use                                        #
 # --------------------------------------------------------------------------- #
-CC = @CC@
+CC = @CXX@
 
 # --------------------------------------------------------------------------- #
 # Set the compiler flags:                                                     #
@@ -20,7 +20,7 @@ CC = @CC@
 #  -std=c++11    turns on compiler and library support for the 2011 C++       #
 #                standard (needed for thread support)                         #
 # --------------------------------------------------------------------------- #
-CFLAGS = @CFLAGS@
+CFLAGS = @CXXFLAGS@
 
 # define any directories containing header files other than /usr/include
 INCLUDES = @INCLUDES@
@@ -30,36 +30,17 @@ LDFLAGS = @LDFLAGS@
 
 # define any libraries to link into executable:
 LIBS =	@LIBS@
-CLIENT_LIBS = @CLIENT_LIBS@
 
 # define the C source files
 MAIN_SRCS = @MAIN_SRCS@
 
-CLIENT_SRCS = @CLIENT_SRCS@
-
 # define the C object files
-OBJS		= $(MAIN_SRCS:.cpp=.o)
-CLIENT_OBJS	= $(CLIENT_SRCS:.cpp=.o)
+OBJS	= $(MAIN_SRCS:.cpp=.o)
 
 # define the executable file
 MAIN	= @MAIN_EXECUTABLE@
-CLIENT	= @CLIENT_EXECUTABLE@
-CERTS = certs
-
-# --------------------------------------------------------------------------- #
-# Define the OpenSSL parameters                                               #
-# --------------------------------------------------------------------------- #
-OPENSSL_KEYSIZE		= @OPENSSL_KEYSIZE@
-# Switch to EC curve x25519 once OpenSSL 1.1.0 is released
-OPENSSL_ECDHCURVE	= @OPENSSL_ECDHCURVE@
-OPENSSL_HASH		= @OPENSSL_HASH@
-OPENSSL_EXPIRE		= @OPENSSL_EXPIRE@
-OPENSSL_CA_DIR		= @OPENSSL_CA_DIR@
-OPENSSL_SUBJ		= "@OPENSSL_SUBJ@"
-CLIENT_KEY		= @OPENSSL_CLIENT_KEY@
-CLIENT_CERT		= @OPENSSL_CLIENT_CERT@
-SERVER_KEY		= @OPENSSL_SERVER_KEY@
-SERVER_CERT		= @OPENSSL_SERVER_CERT@
+MAIN_LINK	= main_link
+CERTS	= certs
 
 
 
@@ -74,56 +55,54 @@ SERVER_CERT		= @OPENSSL_SERVER_CERT@
 # manual section about automatic variables)                                   #
 # --------------------------------------------------------------------------- #
 %.o: %.cpp
-	$(CC) $(CFLAGS) -I$(INCLUDES) -c $< -o $@
+	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
-all:	$(MAIN) $(CLIENT) $(CERTS)
+all:	$(MAIN) $(MAIN_LINK) $(CERTS)
 	@echo
 	@echo Done! Your Econet FileStore gateway server is compiled.
 	
 $(MAIN): $(OBJS)
-	@echo Linking $(MAIN)...
-	$(CC) $(CFLAGS) -I$(INCLUDES) -o $(MAIN) $(OBJS) -L$(LDFLAGS) $(LIBS)
 
-$(CLIENT): $(CLIENT_OBJS)
-	@echo Linking $(CLIENT)...
-	$(CC) $(CFLAGS) -I$(INCLUDES) -o $(CLIENT) $(CLIENT_OBJS) $(CLIENT_LIBS)
+main_link:
+	@echo Linking $(MAIN)...
+	$(CC) $(CFLAGS) $(INCLUDES) -o $(MAIN) $(OBJS) $(LDFLAGS) $(LIBS)
 
 install:
 	@echo Installing $(MAIN)...
 	@install -m 755 $(MAIN) ..
 	@strip ../$(MAIN)
-	@echo Installing $(CLIENT)...
-	@install -m 755 $(CLIENT) ..
-	@strip ../$(CLIENT)
 	@echo
 	@echo Done! Your Econet FileStore gateway server is installed.
 
 certs:
-	@echo Generating certificates...
 	@mkdir -p "@OPENSSL_CA_DIR@"
-	@if [ ! -f ${OPENSSL_CA_DIR}/${CLIENT_CERT} ]; then \
-		openssl req -x509 -${OPENSSL_HASH} -newkey rsa:${OPENSSL_KEYSIZE} -days ${OPENSSL_EXPIRE} -nodes -subj ${OPENSSL_SUBJ} -keyout ${OPENSSL_CA_DIR}/${CLIENT_KEY} -out ${OPENSSL_CA_DIR}/${CLIENT_CERT} ; \
+	@if [ ! -f @OPENSSL_CA_DIR@/@OPENSSL_CLIENT_CERT@ ]; then \
+		echo Generating server certificate... ; \
+		@OPENSSL_SERVER_CMD@ ; \
 	fi
-#	@openssl req -x509 -${OPENSSL_HASH} -newkey ec -pkeyopt ec_paramgen_curve:${OPENSSL_ECDHCURVE} -days ${OPENSSL_EXPIRE} -nodes -subj ${OPENSSL_SUBJ} -keyout ${OPENSSL_CA_DIR}/${CLIENT_KEY} -out ${OPENSSL_CA_DIR}/${CLIENT_CERT}
-	@chmod 600 ${OPENSSL_CA_DIR}/${CLIENT_KEY}
-	@chmod 600 ${OPENSSL_CA_DIR}/${CLIENT_CERT}
-#	@openssl req -x509 -${OPENSSL_HASH} -newkey ec -pkeyopt ec_paramgen_curve:${OPENSSL_ECDHCURVE} -days ${OPENSSL_EXPIRE} -nodes -subj ${OPENSSL_SUBJ} -keyout ${OPENSSL_CA_DIR}/${SERVER_KEY} -out ${OPENSSL_CA_DIR}/${SERVER_CERT}
-	@if [ ! -f ${OPENSSL_CA_DIR}/${SERVER_CERT} ]; then \
-		openssl req -x509 -${OPENSSL_HASH} -newkey rsa:${OPENSSL_KEYSIZE} -days ${OPENSSL_EXPIRE} -nodes -subj ${OPENSSL_SUBJ} -keyout ${OPENSSL_CA_DIR}/${SERVER_KEY} -out ${OPENSSL_CA_DIR}/${SERVER_CERT} ; \
+	@chmod 600 @OPENSSL_CA_DIR@/@OPENSSL_SERVER_KEY@
+	@chmod 600 @OPENSSL_CA_DIR@/@OPENSSL_SERVER_CERT@
+	@if [ ! -f @OPENSSL_CA_DIR@/@OPENSSL_CLIENT_CERT@ ]; then \
+		echo Generating client certificate... ; \
+		@OPENSSL_CLIENT_CMD@ ; \
 	fi
-	@chmod 600 ${OPENSSL_CA_DIR}/${SERVER_KEY}
-	@chmod 600 ${OPENSSL_CA_DIR}/${SERVER_CERT}
+	@chmod 600 @OPENSSL_CA_DIR@/@OPENSSL_CLIENT_KEY@
+	@chmod 600 @OPENSSL_CA_DIR@@OPENSSL_CLIENT_CERT@
 
 clean:
-	$(RM) $(OBJS) $(MAIN) config.h
-	$(RM) $(CLIENT_OBJS) $(CLIENT)
-	$(RM) *~
+	@$(RM) $(OBJS) $(MAIN) config.h
+	@$(RM) *~
+	@$(RM) -rf autom4te.cache
+	@$(RM) config.log config.h config.status
 
 certclean:
-	$(RM) ${OPENSSL_CA_DIR}/${SERVER_KEY} ${OPENSSL_CA_DIR}/${SERVER_CERT}
-	$(RM) ${OPENSSL_CA_DIR}/${CLIENT_KEY} ${OPENSSL_CA_DIR}/${CLIENT_CERT}
+	@$(RM) @OPENSSL_CA_DIR@/@OPENSSL_SERVER_KEY@ @OPENSSL_CA_DIR@/@OPENSSL_SERVER_CERT@
+	@$(RM) @OPENSSL_CA_DIR@/@OPENSSL_CLIENT_KEY@ @OPENSSL_CA_DIR@/@OPENSSL_CLIENT_CERT@
 
-cleanall: clean certclean
+dependclean:
+	cd pigpio && $(MAKE) clean
+
+cleanall: clean certclean dependclean
 
 depend: $(MAIN_SRCS)
 	makedepend $(INCLUDES) $^

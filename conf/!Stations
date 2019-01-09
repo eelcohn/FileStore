@@ -45,5 +45,10 @@
 
 0 123 127.0.0.1 32768
 0 124 192.168.1.2 32768
+2 3 fe80::8fd:7a67:9a89:cafb 32768
 
 
+#									S	= Connect using Secure AUN (DTLS port 33859)
+#									 C	= Only allow connections using peer certificates
+#network	station	ip-address			udp-port	flags	fingerprint
+#2		3	fe80::8fd:7a67:9a89:cafb	32768		SC	ae59e904b80dc81d9a5c92dc418bda0d19299bd0643573b3d068853389d4a37a3655c16c5681b636211f26ec90ab611eb8e51b74caaca290ef526067be94a8b1

@@ -1,13 +1,29 @@
 /* adfs.h
  * All functions for manipulating ADFS disc images
  *
- * (c) Eelco Huininga 2017-2018
+ * (c) Eelco Huininga 2017-2019
  */
 
-#ifndef ECONET_USERS_HEADER
-#define ECONET_USERS_HEADER
+#ifndef ECONET_ADFS_HEADER
+#define ECONET_ADFS_HEADER
 
 #define MAX_ADFS_PATHLENGTH 256	// Todo: find out what the max path length is according to official Acorn specs
+
+#include <cstdio>			// FILE*
+
+#include "netfs.h"			// struct Attributes
+
+typedef struct {
+	struct {
+		unsigned char	name[10];	/* Name */
+		unsigned int	loadaddr;	/* Load address (4 bytes) */
+		unsigned int	execaddr;	/* Exec address (4 bytes) */
+		unsigned int	length;		/* Length (4 bytes) */
+		unsigned int	startsect;	/* Start sector (3 bytes) */
+		unsigned char	sequencenr;	/* Sequence number (1 byte) */
+		Attributes	attrib;		/* Attributes (encoded in bit 7 of Name) */
+	} fsp[47];
+} ADFSDir;
 
 typedef struct {
 	FILE *fp;
@@ -21,43 +37,31 @@ typedef struct {
 	ADFSDir			**dir;		/* Pointer to directory's (0 = root dir) */
 	unsigned char		msn;			/* Master sequence number (1 byte) */
 	unsigned char		dirtitle[19];		/* Directory title (19 bytes) */
-	unsigned int		parent_pointer[3];	/* Pointer to parent directory (3 bytes) */
+	unsigned char		dirname[10];		/* TODO: find out if this is really part of the ADFS directory structure */
+	unsigned char		diridentity[4];		/* TODO: find out if this is really part of the ADFS directory structure */
+	unsigned int		parent_pointer;		/* Pointer to parent directory (3 bytes) */
+	unsigned char		sect0checksum;		/* TODO: find out if this is really part of the ADFS directory structure */
+	unsigned char		end_of_free_space_list_ptr;
 } ADFSDisc;
-
-typedef struct {
-	struct {
-		unsigned char	name[10];	/* Name */
-		unsigned int	loadaddr;	/* Load address (4 bytes) */
-		unsigned int	execaddr;	/* Exec address (4 bytes) */
-		unsigned int	length;		/* Length (4 bytes) */
-		unsigned int	startsect;	/* Start sector (3 bytes) */
-		unsigned char	sequencenr;	/* Sequence number (1 byte) */
-		struct {			/* Attributes (encoded in bit 7 of Name) */
-			bool	R;
-			bool	W;
-			bool	L;
-			bool	D;
-			bool	E;
-			bool	r;
-			bool	w;
-			bool	e;
-			bool	P;
-		} attrib;
-	} fsp[47];
-} ADFSDir;
 
 class adfs {
 	ADFSDisc	*disc;
 
-	bool	adfs::back(void);
-	bool	adfs::cat(const char *objspec);
-	bool	adfs::cdir(const char *objspec);
-	bool	adfs::compact(const char *sp, const char *lp);
-	bool	adfs::copy(const char *listspec, const char *objspec);
-	bool	adfs::delete(const char *objspec);
-	bool	adfs::dir(const char *objspec);
-	int	adfs::mount(const char *objspec, const char *discname)
-	bool	adfs::dismount(int handle);
+	int	access(const char *listspec, const char *attributes);
+	int	back(void);
+	int	cat(const char *objspec);
+	int	cdir(const char *objspec);
+	int	compact(const char *sp, const char *lp);
+	int	copy(const char *listspec, const char *objspec);
+	int	del(const char *objspec);
+	int	dir(const char *objspec);
+	int	dismount(int handle);
+	int	ex(const char *objspec);
+	int	lib(const char *objspec);
+	int	mount(const char *objspec, const char *discname);
 };
+
+extern ADFSDisc			adfsdisc;
+
 #endif
 

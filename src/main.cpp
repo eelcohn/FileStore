@@ -1,7 +1,7 @@
 /* main.cpp
  * Econet gateway server: An Econet file- and print server with transparent ethernet-gateway functionality
  *
- * (c) Eelco Huininga 2017-2018
+ * (c) Eelco Huininga 2017-2019
  */
 
 #include <cstdio>			// Included for NULL, printf(), FILE*, fopen(), fgets(), feof() and fclose()
@@ -9,14 +9,19 @@
 #include <atomic>			// Included for std::atomic
 #include <thread>			// Included for std::thread
 #include <unistd.h>			// geteuid()
+#include <readline/readline.h>		// readline(), rl_bind_key()
+#include <readline/history.h>		// add_history()
 
 #include "main.h"			// Header file for this C++ module
+#include "cli.h"			// cli::user_id
+#include "config.h"
 #include "errorhandler.h"		// Error handling functions
 #include "econet.h"			// Included for pollEconet() thread
 #include "aun.h"			// Included for pollAUN() thread
+#include "cli.h"			// All * commands
+#include "netfs.h"			// netfs::dismount()
 #include "users.h"			// Included for users::loadUsers()
 #include "stations.h"			// Included for users::loadStations()
-#include "cli.h"			// All * commands
 #include "platforms/platform.h"		// All platform- and hardware-dependant functions
 
 using namespace std;
@@ -25,7 +30,7 @@ std::atomic<bool>	bye;
 bool			bootdone;
 FILE			*fp_volume;
 FILE			*fp_bootfile;
-Disc			discs[ECONET_MAX_DISCDRIVES];
+Disc			*discs[ECONET_MAX_DISCDRIVES];
 
 
 
@@ -35,12 +40,12 @@ int main(int argc, char** argv) {
 	int	result, cmdstart;
 
 	/* Print startup message */
-	printf("%s v%s.%s.%s\n\n", STARTUP_MESSAGE, VERSION_MAJOR, VERSION_MINOR, VERSION_PATCHLEVEL);
+//	printf("%s v%s.%s.%s\n\n", STARTUP_MESSAGE, FILESTORE_VERSION_MAJOR, FILESTORE_VERSION_MINOR, FILESTORE_VERSION_PATCHLEVEL);
+	printf(STARTUP_MESSAGE " v" FILESTORE_VERSION_MAJOR "." FILESTORE_VERSION_MINOR "." FILESTORE_VERSION_PATCHLEVEL "\n\n");
 
-	/* Check if we're root (needed for wiringPi setupGpio() */
-	if (geteuid() != 0) {
-		printf("Please start again as root\n");
-		exit(1);
+	/* Handle command line parameters */
+	if (argc > 1) {
+		printf("%s Command line handler; not yet implemented\n", argv[0]);
 	}
 
 	/* Initialize signal handlers */
@@ -48,38 +53,38 @@ int main(int argc, char** argv) {
 
 	/* Initialize the RaspberryPi GPIO hardware */
 	if ((result = api::initializeHardware()) < 0) {
-		errorHandler(result, "Could not initialize hardware");
+		errorHandler(0xC3140000);
 		exit(result);
 	}
 
 	/* Reset the Econet module */
 	if ((result = api::resetHardware()) != 0) {
-		errorHandler(result, "Could not reset hardware");
+		errorHandler(0xC3140001);
 		exit(result);
 	}
 
 	/* Load !Users (users and passwords) */
-	if (!users::loadUsers()) {
-		errorHandler(0x00000021, "Cannot find password file");
-		exit(0x00000021);
+	if ((users::loadUsers()) != 0) {
+		errorHandler(0x000000D6);
+		exit(0x000000D6);
 	}
 
 	/* Load !Stations (Econet to/from AUN translation table) */
-	if (!stations::loadStations()) {
-		errorHandler(0x000000FF, "Could not load !Stations file");
-		exit(0x000000FF);
+	if ((stations::loadStations()) != 0) {
+		errorHandler(0x000000D6);
+		exit(0x000000D6);
 	}
 
 	/* Spawn new thread for polling hardware and processing network data */
 //	std::thread thread_econet_listener(econet::pollNetworkReceive);
-	std::thread thread_ipv4_listener(aun::ipv4_Listener);
-#ifdef ECONET_WITHIPV6
-	std::thread thread_ipv6_listener(aun::ipv6_Listener);
+	std::thread thread_ipv4_aun_Listener(aun::ipv4_aun_Listener);
+#if (FILESTORE_WITHIPV6 == 1)
+	std::thread thread_ipv6_aun_Listener(aun::ipv6_aun_Listener);
 #endif
-#ifdef ECONET_WITHOPENSSL
-	std::thread thread_ipv4_dtls_listener(aun::ipv4_dtls_Listener);
-#ifdef ECONET_WITHIPV6
-	std::thread thread_ipv6_dtls_listener(aun::ipv6_dtls_Listener);
+#if (FILESTORE_WITHOPENSSL == 1)
+	std::thread thread_ipv4_dtls_Listener(aun::ipv4_dtls_Listener);
+#if (FILESTORE_WITHIPV6 == 1)
+//	std::thread thread_ipv6_dtls_Listener(aun::ipv6_dtls_Listener);
 #endif
 #endif
 	/* Announce that a new Econet bridge is online on the network */
@@ -97,32 +102,28 @@ int main(int argc, char** argv) {
 		bootdone = false;
 	}
 
-	/* Main loop */
+	/* Disable readline's filename completion */
+	rl_attempted_completion_function = cli::command_completion;
+
+	/* Set flags before entering main loop */
 	bye = false;
 	econet::netmon = false;
 
+	/* Main loop */
 	while (bye == false) {
 		/* Check network status */
-//		if (api::networkState())
-//			errorHandler(0x000003A3, "No clock signal detected on the Econet network");
+		if (api::networkState())
+			errorHandler(0x000003A3);
 
-		printf(PROMPT);
 		if (bootdone == false) {
-			if (fgets(command, MAX_COMMAND_LENGTH, fp_bootfile) != NULL) {
-				if (feof(fp_bootfile)) {
-
-					fclose(fp_bootfile);
-					bootdone = true;
-				}
-			} else {
+			fgets(command, MAX_COMMAND_LENGTH, fp_bootfile);
+			if (feof(fp_bootfile)) {
 				fclose(fp_bootfile);
 				bootdone = true;
 			}
 		} else {
-//			cin >> command;
-//			scanf("%80s", command);
-			if (fgets(command, MAX_COMMAND_LENGTH, stdin) == NULL)
-				printf("Could not read stdin.\n");
+			if ((command = readline(PROMPT)) == nullptr)
+				printf("Warning: Could not read stdin.\n");
 		}
 
 		/* Strip leading *'s */
@@ -135,39 +136,53 @@ int main(int argc, char** argv) {
 
 		/* When processing the !Boot script, print the command currently being processed */
 		if (bootdone == false)
-			printf("%s", command);
+			printf("%s%s", PROMPT, command);
 
-		/* Split command line into tokens */
-		args = tokenizeCommandLine(command);
+		/* Only process non-empty commands */
+		if (strlen(command) > 0) {
+			/* Decrease *ENABLE timer */
+			if (users::users[cli::user_id].enable_counter > 0)
+				users::users[cli::user_id].enable_counter--;
 
-		/* Execute command */
-		executeCommand(args);
+			/* Add command to readline history */
+			if (bootdone == true)
+				add_history(command);
+
+			/* Split command line into tokens */
+			args = tokenizeCommandLine(command);
+
+			/* Execute command */
+			executeCommand(args);
+
+			/* Free memory claimed by tokenizeCommandLine() */
+			free(args);
+		}
+
+		/* Release memory */
+		if (bootdone == true)
+			free(command);
 	}
 
 	printf("\n");
 
 	/* Wait for the threads to finish */
 //	thread_econet_listener.join();
-	thread_ipv4_listener.join();
-#ifdef ECONET_IPV6
-	thread_ipv6_listener.join();
+	thread_ipv4_aun_Listener.join();
+#if (FILESTORE_WITHIPV6 == 1)
+	thread_ipv6_aun_Listener.join();
 #endif
-#ifdef ECONET_WITHOPENSSL
-	thread_ipv4_dtls_listener.join();
-#ifdef ECONET_IPV6
-	thread_ipv6_dtls_listener.join();
+#if (FILESTORE_WITHOPENSSL == 1)
+	thread_ipv4_dtls_Listener.join();
+#if (FILESTORE_WITHIPV6 == 1)
+//	thread_ipv6_dtls_Listener.join();
 #endif
 #endif
 
 	/* Dismount all open disc images */
-	commands::dismount(NULL);
+//	netfs::dismount(NULL);
 
 	/* Shutdown the hardware interface(s) */
 	api::shutdownHardware();
-
-	/* Release memory */
-	free(command);
-	free(args);
 
 	return(0);
 }
@@ -175,12 +190,12 @@ int main(int argc, char** argv) {
 /* Split (tokenize) a command line */
 char **tokenizeCommandLine(char *line) {
 	const char *TOKEN_DELIMITER = " \t\r\n\a";
-	int bufsize = MAX_COMMAND_LENGTH, position = 0;
+	int bufsize = MAX_COMMAND_LENGTH+1, position = 0;
 	char **tokens = (char **)malloc(bufsize * sizeof(char*));
 	char *token;
 
 	if (!tokens) {
-		errorHandler(0xFFFFFFFF, "tokenizeCommandLine: allocation error");
+		errorHandler(0xC0000000);
 		exit(-1);
 	}
 
@@ -192,7 +207,7 @@ char **tokenizeCommandLine(char *line) {
 			bufsize += MAX_COMMAND_LENGTH;
 			tokens = (char **)realloc(tokens, bufsize * sizeof(char*));
 			if (!tokens) {
-				errorHandler(0xFFFFFFFF, "tokenizeCommandLine: allocation error");
+				errorHandler(0xC0000001);
 				exit(-1);
 			}
 		}
@@ -206,47 +221,45 @@ char **tokenizeCommandLine(char *line) {
 
 /* Execute built-in command */
 void executeCommand(char **args) {
-	int i, result;
+	size_t i;
+	int result, argv;
 
 	if ((args[0] == NULL) || (args[0][0] == '|')) {
 		// An empty command or a remark was entered.
 		return;
 	}
 
+	/* Calculate the number of arguments to pass */
+	argv = 0;
+	while (args[argv] != NULL)
+		argv++;
+
 	for (i = 0; i < totalNumOfCommands(); i++) {
-		if (strcmp(strtoupper(args[0]), cmds[i][0]) == 0) {
-			switch (result = (*cmds_jumptable[i])(args)) {
+		if (strcmp(strtoupper(args[0]), commands[i].command) == 0) {
+			switch (result = (*commands[i].function)(argv, args)) {
 				case 0 :
+					/* Function executed the command correctly */
 					break;
 
 				case -1 :
+					/* User requested to exit */
 					bye = true;
 					break;
 
 				case -2 :
-					printf ("%s\n", cmds[i][1]);
+					/* Syntax error: show help message */
+					printf ("Usage: %s%s %s\n", PROMPT, commands[i].command, commands[i].help);
 					break;
 
 				default :
-					errorHandler(result, "Bad command");
+					/* Any other error returned by the function */
+					errorHandler(result);
 					break;
 			}
 			return;
 		}
 	}
 
-	errorHandler(0x000000FE, "Bad command");
-}
-
-/* Capitalize a string */
-char * strtoupper(char *s) {
-	int l;
-
-	l = strlen(s);
-	for (int i = 0; i < l; i++)
-		if (s[i] >= 'a' and s[i] <= 'z')
-			s[i] = s[i] - 32;
-
-	return s;
+	errorHandler(0x000000FE);
 }
 
