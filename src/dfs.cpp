@@ -1,3 +1,6 @@
+#include <cstdio>		// fopen()
+#include <cstdlib>		// free()
+
 #define ERR_LOCKED		0xC3
 #define ERR_BADDIR		0xCE
 #define ERR_BADATTRIBUTE	0xCF
@@ -154,6 +157,6 @@ int dfs::mount(char *filename) {
 }
 
 void dfs::dismount(int slot) {
-	fclose (dfsdisc::fp);
-	free discs[slot];
+	close (dfsdisc::fp);
+	free (discs[slot]);
 }

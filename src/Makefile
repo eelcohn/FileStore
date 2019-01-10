@@ -20,7 +20,7 @@ CC = g++
 #  -std=c++11    turns on compiler and library support for the 2011 C++       #
 #                standard (needed for thread support)                         #
 # --------------------------------------------------------------------------- #
-CFLAGS = -g -O2 -std=c++11 -Wall -Wextra -Wpedantic
+CFLAGS = -g -O2 -std=c++11 -Wall -Wextra -Wpedantic -g
 
 # define any directories containing header files other than /usr/include
 INCLUDES = 
@@ -34,13 +34,13 @@ LIBS =	 -lpthread -lreadline -lcrypto -lssl
 # define the C source files
 MAIN_SRCS = \
 	main.cpp \
-	adfs.cpp \
 	aun.cpp \
 	cli.cpp \
 	debug.cpp \
 	econet.cpp \
 	errorhandler.cpp \
-	fs_native.cpp \
+	adfs.cpp \
+	nativefs.cpp \
 	netfs.cpp \
 	settings.cpp \
 	stations.cpp \

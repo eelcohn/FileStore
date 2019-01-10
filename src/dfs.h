@@ -1,11 +1,3 @@
-#define ERR_LOCKED		0xC3
-#define ERR_BADDIR		0xCE
-#define ERR_BADATTRIBUTE	0xCF
-#define ERR_FILENOTFOUND	0xD6
-#define ERR_CHANNEL		0xDE
-#define ERR_EOF			0xDF
-#define ERR_BAD_COMMAND		0xFE
-
 class dfs {
 	struct {
 		unsigned char		type = 'D';

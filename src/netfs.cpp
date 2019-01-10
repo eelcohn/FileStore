@@ -7,8 +7,8 @@
 #include <cstdlib>			// free()
 #include <cstring>			// strchr()
 
-#include "adfs.h"
 #include "main.h"			// ECONET_MAX_DISCDRIVES
+#include "adfs.h"
 #include "netfs.h"			// FILESTORE_HANDLE
 #include "settings.h"			// settings::*
 #include "platforms/platform.h"

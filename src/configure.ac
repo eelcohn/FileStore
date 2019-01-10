@@ -78,13 +78,13 @@ FILESTORE_ADAPTER_NONE=0
 FILESTORE_ADAPTER_REMA=1
 AC_SUBST(MAIN_SRCS, "\\
 	main.cpp \\
-	adfs.cpp \\
 	aun.cpp \\
 	cli.cpp \\
 	debug.cpp \\
 	econet.cpp \\
 	errorhandler.cpp \\
-	fs_native.cpp \\
+	adfs.cpp \\
+	nativefs.cpp \\
 	netfs.cpp \\
 	settings.cpp \\
 	stations.cpp \\
