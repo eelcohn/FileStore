@@ -12,6 +12,8 @@
 #define FILESTORE_MAX_FILEHANDLES 256
 #define FILESTORE_EOF -1
 
+#include "main.h"		/* ECONET_MAX_FILENAME_LEN */
+
 typedef struct {		/* Attributes (encoded in bit 7 of Name) */
 	bool	R;		/* Read access */
 	bool	W;		/* Write access */
@@ -22,7 +24,22 @@ typedef struct {		/* Attributes (encoded in bit 7 of Name) */
 	bool	w;
 	bool	e;
 	bool	P;		/* Private item: invisible to all users except owners */
-} Attributes;
+} FSAttributes;
+
+typedef struct {
+	char		name[ECONET_MAX_FILENAME_LEN];	/* Acorn filename */
+	uint32_t	loadaddr;	/* Load address (4 bytes) */
+	uint32_t	execaddr;	/* Exec address (4 bytes) */
+	uint32_t	length;		/* Length (4 bytes) */
+	uint32_t	startsect;	/* Start sector (3 bytes) */
+	uint8_t		sequencenr;	/* Sequence number (1 byte) */
+	FSAttributes	attrib;		/* Attributes (encoded in bit 7 of Name) */
+} FSObject;
+
+typedef struct {
+	FSObject	fsp[ECONET_MAX_DIRENTRIES];	/* TODO: Replace [47] with dynamic memory allocation using malloc/realloc and double pointers */
+} FSDirectory;
+
 
 typedef int16_t FILESTORE_HANDLE;
 
@@ -42,7 +59,8 @@ namespace netfs {
 	int rename(const char *oldfile, const char *newfile);
 	FILESTORE_HANDLE newhandle(void);
 	void freehandle(FILESTORE_HANDLE handle);
-	void strtoattrib(const char *string, Attributes *attrib);
+	void strtoattrib(const char *string, FSAttributes *attrib);
+	void attribtostr(const FSAttributes *attrib, char *string);
 
 //private:
 	const char *getDiscTitle(int i);

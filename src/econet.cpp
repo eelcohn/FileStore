@@ -1508,7 +1508,7 @@ fprintf(stderr, "entry=%i numentries=%i dirname=%s\n", entrypoint, numentries, f
 		return retval;
 	}
 
-	// &D0 PrintServerReply
+	// &D0 PrintServerData (old; BBC PrintServer ROM) / PrintServerDataReply (new)
 	int portD0handler(const econet::Frame *rx_data, size_t rx_length, econet::Frame *tx_data, size_t tx_length) {
 		int retval;
 

@@ -18,6 +18,7 @@
 #define ECONET_MAX_DISCDRIVES		8
 #define ECONET_MAX_DISCTITLE_LEN	16
 #define ECONET_MAX_FILENAME_LEN		10
+#define ECONET_MAX_DIRENTRIES		47
 #define FILESTORE_MAX_ATTRIBS		8
 
 #include <cstdio>			// Included for FILE*

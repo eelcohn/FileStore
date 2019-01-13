@@ -11,12 +11,11 @@
 #include <cstring>			// strcmp()
 #include "adfs.h"
 #include "main.h"			// strlcpy()
+#include "netfs.h"			/* attribtostr() */
 
-#define ADFS_MAX_PATHLENGTH 256
-
-char csd[ADFS_MAX_PATHLENGTH];	// Currently Selected Directory
-char psd[ADFS_MAX_PATHLENGTH];	// Previously Selected Directory
-char cld[ADFS_MAX_PATHLENGTH];	// Currently Selected Library
+char csd[MAX_ADFS_PATHLENGTH];	// Currently Selected Directory
+char psd[MAX_ADFS_PATHLENGTH];	// Previously Selected Directory
+char cld[MAX_ADFS_PATHLENGTH];	// Currently Selected Library
 
 ADFSDisc adfsdisc;
 
@@ -24,54 +23,19 @@ ADFSDisc adfsdisc;
 
 int adfs::access(const char *listspec, const char *attributes) {
 	int i;
-	size_t a;
 
 	// Load directory entries
 	for (i = 0; i < 47; i++) {
 		if (strcmp((char *)adfsdisc.dir[0]->fsp[i].name, listspec) == 0) {
-			for (a = 0; a < strlen(attributes); a++) {
-				switch(attributes[a]) {
-					case 'R' :
-						break;
-
-					case 'W' :
-						break;
-
-					case 'L' :
-						break;
-
-					case 'D' :
-						break;
-
-					case 'E' :
-						break;
-
-					case 'r' :
-						break;
-
-					case 'w' :
-						break;
-
-					case 'e' :
-						break;
-
-					case 'P' :
-						break;
-
-					default :
-						return 0x000000CF;
-						break;
-				}
-			}
+			netfs::strtoattrib(attributes, &adfsdisc.dir[0]->fsp[i].attrib);
 		}
 	}
 
-	
 	return 0;
 }
 
 int adfs::back(void) {
-	char temp[ADFS_MAX_PATHLENGTH];
+	char temp[MAX_ADFS_PATHLENGTH];
 
 	strlcpy(temp, csd, sizeof(temp));
 	strlcpy(csd, psd, sizeof(csd));
@@ -226,7 +190,7 @@ int adfs::lib(const char *objspec) {
 
 int adfs::mount(const char *objspec, const char *discname) {
 	int i, handle;
-	ADFSDir adfsdir;
+	FSDirectory adfsdir;
 
 	/* Temporary code to prevent -Wunused-parameter for now */
 	printf("%s\n", discname);
@@ -235,7 +199,7 @@ int adfs::mount(const char *objspec, const char *discname) {
 		return (0x000000D6);
 	}
 
-	if ((adfsdisc.dir[0] = (ADFSDir *) malloc(1 * sizeof(adfsdir))) == NULL) {
+	if ((adfsdisc.dir[0] = (FSDirectory *) malloc(1 * sizeof(adfsdir))) == NULL) {
 		fclose(adfsdisc.fp);
 //		errorHandler(0xFFFFFFFF, "adfs::mount: allocation error");
 		return (0xFFFFFFFF);

@@ -123,8 +123,8 @@ namespace netfs {
 		netfs::handles[handle] = false;
 	}
 
-	/* Convert a string of object attributes to internal flags */
-	void strtoattrib(const char *string, Attributes *attrib) {
+	/* Convert a string of object attributes to Acorn flags */
+	void strtoattrib(const char *string, FSAttributes *attrib) {
 		if (strchr(string, 'R') != NULL)
 			attrib->R = true;
 		else
@@ -169,6 +169,31 @@ namespace netfs {
 			attrib->P = true;
 		else
 			attrib->P = false;
+	}
+
+	/* Convert Acorn object attributes to a string */
+	void attribtostr(const FSAttributes *attrib, char *string) {
+		int i;
+
+		i = 0;
+		if (attrib->R == true)
+			string[i++] = 'R';
+		if (attrib->W == true)
+			string[i++] = 'W';
+		if (attrib->L == true)
+			string[i++] = 'L';
+		if (attrib->D == true)
+			string[i++] = 'D';
+		if (attrib->E == true)
+			string[i++] = 'E';
+		if (attrib->r == true)
+			string[i++] = 'r';
+		if (attrib->w == true)
+			string[i++] = 'w';
+		if (attrib->e == true)
+			string[i++] = 'e';
+		if (attrib->P == true)
+			string[i++] = 'P';
 	}
 
 //private:

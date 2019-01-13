@@ -6,33 +6,21 @@
 
 #include <cstdio>	// FILE*, fopen(), fclose(), fgetpos(), fsetpos(), fgetc(), fputc(), fread(), fwrite()
 #include <cstring>	// basename()
+#include <dirent.h>	// dirent, opendir, readdir
 #include <unistd.h>	// access()
 
 #include "config.h"	// uint8_t, uint32_t
 #include "main.h"	// ECONET_MAX_FILENAME_LEN
+#include "nativefs.h"	/* FILESTORE_NATIVE_FILEHANDLE */
 #include "netfs.h"	// FILESTORE_MAX_FILEHANDLES, FILESTORE_EOF, FILESTORE_HANDLE, newhandle(), freehandle(), struct Attributes
 
-typedef struct {
-	FILE *fp;
-	char *filename;
-	uint32_t loadaddr;
-	uint32_t execaddr;
-	uint32_t length;
-	uint32_t pos;
-	Attributes attrib;
-} FILESTORE_NATIVE_FILEHANDLES;
 
 
-
-namespace fs_native {
-	FILESTORE_NATIVE_FILEHANDLES filehandles[FILESTORE_MAX_FILEHANDLES];
+namespace nativefs {
+	FILESTORE_NATIVE_FILEHANDLE filehandles[FILESTORE_MAX_FILEHANDLES];
 
 	FILESTORE_HANDLE open(const char *filename, const char *mode) {
 		FILESTORE_HANDLE handle;
-		FILE *fp_inffile;
-		char inffilename[ECONET_MAX_FILENAME_LEN];
-		char inf_filename[ECONET_MAX_FILENAME_LEN];
-		char access[FILESTORE_MAX_ATTRIBS];
 		long int filesize;
 
 		if ((handle = netfs::newhandle()) != -1) {
@@ -40,30 +28,17 @@ namespace fs_native {
 			if (filehandles[handle].fp == NULL) {
 				return FILESTORE_EOF;
 			} else {
-				/* Assemble filename for .INF file */
-				strlcpy(inffilename, basename(filename), sizeof(inffilename));
-				strcat(inffilename, ".INF");
-
 				/* Get filesize */
 				fseek(filehandles[handle].fp, 0, SEEK_END);
 				filesize = ftell(filehandles[handle].fp);
 				fseek(filehandles[handle].fp, 0, SEEK_SET);
+				filehandles[handle].obj->length = filesize;
 
-				/* Read contents of .INF file */
-				fp_inffile = fopen(inffilename, "r");
-				if (fp_inffile == NULL) {
-					fscanf(fp_inffile, "%s %x %x %x %s", inf_filename, &filehandles[handle].loadaddr, &filehandles[handle].execaddr, &filehandles[handle].length, access);
-					if (filehandles[handle].length != filesize)
-						fprintf(stderr, "fopen Actual filesize and .INF filesize for %s differ!\n", filename);
-					netfs::strtoattrib(access, &filehandles[handle].attrib);
-				} else {
-					filehandles[handle].loadaddr = 0;
-					filehandles[handle].execaddr = 0;
-					filehandles[handle].length = filesize;
-				}
+				/* Get extra information from .INF file */
+				readinf(filename, filehandles[handle].obj);
 
 				/* Set internal variables */
-				filehandles[handle].filename = (char *)filename;
+				strlcpy((char *) filehandles[handle].obj->name, filename, ECONET_MAX_FILENAME_LEN);
 				filehandles[handle].pos = 0;
 
 				/* Return FileStore's file handle */
@@ -71,7 +46,7 @@ namespace fs_native {
 			}
 		}
 
-		fprintf(stderr, "fopen Unable to open file: Maximum number of open files reached");
+		fprintf(stderr, "0x000000C0 fopen Unable to open file: Maximum number of open files reached");
 		return FILESTORE_EOF;
 	}
 
@@ -82,7 +57,7 @@ namespace fs_native {
 		} else {
 			if (fclose(filehandles[handle].fp) == 0) {
 				filehandles[handle].fp = NULL;
-				filehandles[handle].filename = NULL;
+				filehandles[handle].obj->name[0] = '\0';
 				filehandles[handle].pos = 0;
 				netfs::freehandle(handle);
 				return 0;
@@ -91,6 +66,83 @@ namespace fs_native {
 				return FILESTORE_EOF;
 			}
 		}
+	}
+
+	size_t load(const char *localfile, char *buffer, uint32_t bufsize) {
+		FILESTORE_HANDLE handle;
+		size_t retval;
+
+		if ((handle = open(localfile, "r")) == FILESTORE_EOF)
+			return FILESTORE_EOF;
+
+		if ((retval = read(buffer, bufsize, handle)) == FILESTORE_EOF)
+			return FILESTORE_EOF;
+
+		if ((close(handle)) == FILESTORE_EOF)
+			return FILESTORE_EOF;
+
+		return retval;
+	}
+
+	size_t save(const char *localfile, char *buffer, uint32_t bufsize) {
+		FILESTORE_HANDLE handle;
+		size_t retval;
+
+		if ((handle = open(localfile, "w")) == FILESTORE_EOF)
+			return FILESTORE_EOF;
+
+		if ((retval = write(buffer, bufsize, handle)) == FILESTORE_EOF)
+			return FILESTORE_EOF;
+
+		if ((close(handle)) == FILESTORE_EOF)
+			return FILESTORE_EOF;
+
+		return retval;
+	}
+
+	int cat(const char *localpath, FSDirectory *dir) {
+		DIR *localdir;
+		struct dirent *direntry;
+		int i;
+
+		i = 0;
+		if ((localdir = opendir(localpath)) != NULL) {
+			while (((direntry = readdir(localdir)) != NULL) && (i < ECONET_MAX_DIRENTRIES)) {
+				strlcpy((char *) dir->fsp[i].name, direntry->d_name, ECONET_MAX_FILENAME_LEN);
+				readinf(direntry->d_name, &dir->fsp[i]);
+				i++;
+			}
+			closedir(localdir);
+			return i;
+		} else {
+			return 0;
+		}
+	}
+
+	int remove(const char *objspec) {
+		int i;
+
+		for (i = 0; i < FILESTORE_MAX_FILEHANDLES; i++)
+			if (strcmp((const char *) filehandles[i].obj->name, objspec) == 0)
+				return 0x000000C3;				/* Object is open: return 'Object locked' */
+
+		return remove(objspec);
+	}
+
+	int rename(const char *oldname, const char *newname) {
+		FILE *fp;
+		int i;
+
+		for (i = 0; i < FILESTORE_MAX_FILEHANDLES; i++)
+			if (strcmp((const char *) filehandles[i].obj->name, oldname) == 0)
+				return 0x000000C3;				/* Object is open: return 'Object locked' */
+
+		if ((fp = fopen(newname, "r")) != NULL) {
+			fclose(fp);
+			return 0x000000C4;				/* Object already exists */
+		}
+
+		return rename(oldname, newname);
 	}
 
 	int getpos(FILESTORE_HANDLE handle, uint32_t &pos) {
@@ -118,7 +170,7 @@ namespace fs_native {
 			/* Invalid handle */
 			return FILESTORE_EOF;
 		} else {
-			if (filehandles[handle].pos <= filehandles[handle].length) {
+			if (filehandles[handle].pos <= filehandles[handle].obj->length) {
 				return fgetc(filehandles[handle].fp);
 			} else {
 				return FILESTORE_EOF;
@@ -126,12 +178,12 @@ namespace fs_native {
 		}
 	}
 
-	size_t fread(void *ptr, uint32_t count, FILESTORE_HANDLE handle) {
+	size_t read(void *ptr, uint32_t count, FILESTORE_HANDLE handle) {
 		if (filehandles[handle].fp == NULL) {
 			/* Invalid handle */
 			return FILESTORE_EOF;
 		} else {
-			if (filehandles[handle].pos <= filehandles[handle].length) {
+			if (filehandles[handle].pos <= filehandles[handle].obj->length) {
 				return fread(ptr, sizeof(uint8_t), count, filehandles[handle].fp);
 			} else {
 				return FILESTORE_EOF;
@@ -148,7 +200,7 @@ namespace fs_native {
 		}
 	}
 
-	size_t fwrite(const void *ptr, uint32_t count, FILESTORE_HANDLE handle) {
+	size_t write(const void *ptr, uint32_t count, FILESTORE_HANDLE handle) {
 		long int pos;
 		size_t result;
 
@@ -165,6 +217,53 @@ namespace fs_native {
 
 			/* Return fwrite() result */
 			return result;
+		}
+	}
+
+	void readinf(const char *filename, FSObject *obj) {
+		FILE *fp_inffile;
+		char inffilename[ECONET_MAX_FILENAME_LEN];
+		char inf_filename[ECONET_MAX_FILENAME_LEN];
+		char access[FILESTORE_MAX_ATTRIBS];
+		uint32_t length;
+
+		/* Assemble filename for .INF file */
+		strlcpy(inffilename, basename(filename), sizeof(inffilename));
+		strcat(inffilename, ".INF");
+
+		/* Read contents of .INF file */
+		fp_inffile = fopen(inffilename, "r");
+		if (fp_inffile != NULL) {
+			fscanf(fp_inffile, "%s %x %x %x %s", inf_filename, &obj->loadaddr, &obj->execaddr, &length, access);
+			netfs::strtoattrib(access, &obj->attrib);
+			if (obj->length != length)
+				fprintf(stderr, "nativefs::open Actual filesize and .INF filesize for %s differ!\n", filename);
+			fclose(fp_inffile);
+		} else {
+			obj->loadaddr = 0;
+			obj->execaddr = 0;
+		}
+	}
+
+	void writeinf(const char *filename, const FSObject *obj) {
+		FILE *fp_inffile;
+		char inffilename[ECONET_MAX_FILENAME_LEN];
+		char inf_filename[ECONET_MAX_FILENAME_LEN];
+		char access[FILESTORE_MAX_ATTRIBS];
+		uint32_t length;
+
+		/* Assemble filename for .INF file */
+		strlcpy(inffilename, basename(filename), sizeof(inffilename));
+		strcat(inffilename, ".INF");
+
+		/* Write contents of .INF file */
+		fp_inffile = fopen(inffilename, "w");
+		if (fp_inffile != NULL) {
+			netfs::attribtostr(&obj->attrib, access);
+			fprintf(fp_inffile, "%s %08x %08x %06x %s", inf_filename, &obj->loadaddr, &obj->execaddr, &length, access);
+			fclose(fp_inffile);
+		} else {
+			fprintf(stderr, "nativefs::writeinf Unable to write .INF file %s\n", inffilename);
 		}
 	}
 }
