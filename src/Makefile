@@ -20,7 +20,7 @@ CC = g++
 #  -std=c++11    turns on compiler and library support for the 2011 C++       #
 #                standard (needed for thread support)                         #
 # --------------------------------------------------------------------------- #
-CFLAGS = -g -O2 -std=c++11 -Wall -Wextra -Wpedantic -g
+CFLAGS = -g -O2 -std=c++11 -Wall -Wextra -Wpedantic
 
 # define any directories containing header files other than /usr/include
 INCLUDES = 
