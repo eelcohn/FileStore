@@ -89,7 +89,7 @@ AC_SUBST(MAIN_SRCS, "\\
 	settings.cpp \\
 	stations.cpp \\
 	users.cpp \\
-	platforms/linux.cpp")
+	platforms/linux/linux.cpp")
 AC_SUBST(MAIN_EXECUTABLE, "FileStore")
 OPENSSL_KEYSIZE="4096"
 OPENSSL_ECDHCURVE="x25519"

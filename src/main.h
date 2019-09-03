@@ -27,14 +27,24 @@
 #include <openssl/sha.h>		// Included for SHA256_DIGEST_LENGTH
 
 #include "config.h"			// All definitions made by the ./configure or ./build script
+#include "platforms/platform.h"		/* PATH_MAX */
 
-enum FileSystems {ACORN_DFS, ACORN_ADFS, WATFORD_DDFS, SOLIDISK_DDFS};
-
+enum FileSystems {NATIVE_FS, ACORN_DFS, ACORN_ADFS, WATFORD_DDFS, SOLIDISK_DDFS};
+/*const char *FileSystemsDesc[] = {
+	"NativeFS",
+	"DFS",
+	"ADFS",
+	"WatfordDDFS",
+	"SolidiskDDFS"
+};
+*/
 typedef struct {
+	uint32_t	filesystem;				/* Type of file system, see enum above */
+	char		title[ECONET_MAX_DISCTITLE_LEN];	/* Disc title */
+	char		localobj[PATH_MAX];			/* Full path to object on local filesystem */
 	FILE		*fp;
-	uint32_t	filesystem;	// Type of file system, see enum above
-	char		*image;		// Pointer to 
-	uint32_t	size;		// Total size of disc
+	char		*image;					/* Pointer to */
+	uint32_t	size;					/* Total size of disc */
 } Disc;
 
 typedef struct {

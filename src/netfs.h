@@ -34,12 +34,19 @@ typedef struct {
 	uint32_t	startsect;	/* Start sector (3 bytes) */
 	uint8_t		sequencenr;	/* Sequence number (1 byte) */
 	FSAttributes	attrib;		/* Attributes (encoded in bit 7 of Name) */
+	time_t		ctime;		/* Creation date/time */
+	time_t		mtime;		/* Modification date/time */
 } FSObject;
 
 typedef struct {
 	FSObject	fsp[ECONET_MAX_DIRENTRIES];	/* TODO: Replace [47] with dynamic memory allocation using malloc/realloc and double pointers */
 } FSDirectory;
 
+
+//typedef struct {
+//	uint8_t		disc;
+//	uint32_t	ptr;
+//} FileHandles;
 
 typedef int16_t FILESTORE_HANDLE;
 
@@ -49,7 +56,7 @@ namespace netfs {
 	extern bool handles[FILESTORE_MAX_FILEHANDLES];
 
 	int access(const char *fsp, const char *flags);
-	int cat(const char *fsp);
+	int catalogue(uint8_t csd, FSDirectory *dir, const char *mask, uint8_t entrypoint, uint8_t numentries);
 	int cdir(const char *dir);
 	int del(const char *fsp);
 	int dismount(const char *disc);

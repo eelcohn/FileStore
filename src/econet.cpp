@@ -507,6 +507,7 @@ namespace econet {
 
 	/* &99 FileServerCommand */
 	int port99handler(const econet::Frame *rx_data, size_t rx_length, econet::Frame *tx_data, size_t tx_length) {
+		FSDirectory dir[ECONET_MAX_DIRENTRIES];
 		uint32_t loadaddr, execaddr, length, offset, size;
 		char filename[ECONET_MAX_FILENAME_LEN+1];
 		char disctitle[ECONET_MAX_DISCTITLE_LEN+1];
@@ -622,6 +623,8 @@ while (args[argv] != NULL) {
 					uint8_t entrypoint  = rx_data->aun.data[0x06];
 					uint8_t numentries  = rx_data->aun.data[0x07];
 					strlcpy(filename, (const char *) &rx_data->aun.data[0x08], rx_length - 0x10);
+
+					result = netfs::catalogue(rx_data->aun.csd, dir, filename, entrypoint, numentries);
 fprintf(stderr, "entry=%i numentries=%i dirname=%s\n", entrypoint, numentries, filename);
 
 					loadaddr = 0xFFFF1900;
@@ -756,6 +759,8 @@ fprintf(stderr, "entry=%i numentries=%i dirname=%s\n", entrypoint, numentries, f
 					length = rx_data->aun.data[0x06] | (rx_data->aun.data[0x07] << 8) | (rx_data->aun.data[0x08] << 16);
 					if (rx_data->aun.data[0x05] == 0x00)
 						offset = rx_data->aun.data[0x09] | (rx_data->aun.data[0x0A] << 8) | (rx_data->aun.data[0x0B] << 16);
+//					else
+//						offset = handles[rx_data->aun.csd].ptr;
 
 					tx_data->aun.data[0x00] = 0;						// Return command
 					tx_data->aun.data[0x01] = 0;						// Result
@@ -773,6 +778,8 @@ fprintf(stderr, "entry=%i numentries=%i dirname=%s\n", entrypoint, numentries, f
 					length = rx_data->aun.data[0x06] | (rx_data->aun.data[0x07] << 8) | (rx_data->aun.data[0x08] << 16);
 					if (rx_data->aun.data[0x05] == 0x00)
 						offset = rx_data->aun.data[0x09] | (rx_data->aun.data[0x0A] << 8) | (rx_data->aun.data[0x0B] << 16);
+//					else
+//						offset = handles[rx_data->aun.csd].ptr;
 
 					tx_data->aun.data[0x00] = 0;						// Return command
 					tx_data->aun.data[0x01] = 0;						// Result
@@ -1450,7 +1457,7 @@ fprintf(stderr, "entry=%i numentries=%i dirname=%s\n", entrypoint, numentries, f
 
 			// List print servers
 			case 0x06 :
-				tx_data->aun.port = 0x9E;				// Set port number to FindServerReply
+				tx_data->aun.port = 0x9E;			// Set port number to FindServerReply
 				tx_data->aun.data[0x00] = printer_status;	// Printer status report (&00=Ready, &01=Busy with station nn.ss, &02-&FF=Jammed/Offline
 				tx_data->aun.data[0x01] = printer_station;	// Station id
 				tx_data->aun.data[0x02] = printer_network;	// Network id

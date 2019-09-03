@@ -9,6 +9,7 @@
 
 #include "main.h"			// ECONET_MAX_DISCDRIVES
 #include "adfs.h"
+#include "nativefs.h"			/* natviefs::* */
 #include "netfs.h"			// FILESTORE_HANDLE
 #include "settings.h"			// settings::*
 #include "platforms/platform.h"
@@ -31,10 +32,8 @@ namespace netfs {
 		return(0);
 	}
 
-	int cat(const char *fsp) {
-		/* Temporary code to prevent -Wunused-parameter for now */
-		printf("Drive/path (optional): %s\n", fsp);
-		return(0);
+	int catalogue(uint8_t csd, FSDirectory *dir, const char *mask, uint8_t entrypoint, uint8_t numentries) {
+		return nativefs::catalogue("/tmp/", dir, mask, entrypoint, numentries);
 	}
 
 	int cdir(const char *dir) {
@@ -173,27 +172,25 @@ namespace netfs {
 
 	/* Convert Acorn object attributes to a string */
 	void attribtostr(const FSAttributes *attrib, char *string) {
-		int i;
-
-		i = 0;
 		if (attrib->R == true)
-			string[i++] = 'R';
+			*string++ = 'R';
 		if (attrib->W == true)
-			string[i++] = 'W';
+			*string++ = 'W';
 		if (attrib->L == true)
-			string[i++] = 'L';
+			*string++ = 'L';
 		if (attrib->D == true)
-			string[i++] = 'D';
+			*string++ = 'D';
 		if (attrib->E == true)
-			string[i++] = 'E';
+			*string++ = 'E';
 		if (attrib->r == true)
-			string[i++] = 'r';
+			*string++ = 'r';
 		if (attrib->w == true)
-			string[i++] = 'w';
+			*string++ = 'w';
 		if (attrib->e == true)
-			string[i++] = 'e';
+			*string++ = 'e';
 		if (attrib->P == true)
-			string[i++] = 'P';
+			*string++ = 'P';
+		*string = '\0';
 	}
 
 //private:

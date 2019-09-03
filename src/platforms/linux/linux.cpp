@@ -8,8 +8,8 @@
 #include <cstdio>			// Included for
 
 #include "linux.h"			//
-#include "../errorhandler.h"		// Error handling functions
-#include "../main.h"			// Included for bye
+#include "../../errorhandler.h"		// Error handling functions
+#include "../../main.h"			// Included for bye
 
 
 

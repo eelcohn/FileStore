@@ -8,6 +8,7 @@
 #define ECONET_FS_NATIVE_HEADER
 
 #include "netfs.h"			/* FILESTORE_MAX_FILEHANDLES, FILESTORE_HANDLE */
+#include "platforms/platform.h"		/* PATH_MAX */
 
 typedef struct {
 	char localobj[PATH_MAX];	/* Full path to object on local filesystem */
@@ -23,7 +24,7 @@ namespace nativefs {
 	int close(FILESTORE_HANDLE handle);
 	size_t load(const char *localfile, char *buffer, uint32_t bufsize);
 	size_t save(const char *localfile, char *buffer, uint32_t bufsize);
-	int cat(const char *localpath, FSDirectory *dir);
+	int catalogue(const char *localpath, FSDirectory *dir, const char *mask, const uint8_t startentry, const uint8_t numentries);
 	int remove(const char *objspec);
 	int rename(const char *oldname, const char *newname);
 	int getpos(FILESTORE_HANDLE handle, uint32_t &pos);

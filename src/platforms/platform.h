@@ -7,7 +7,8 @@
 #include "../config.h"
 
 #ifdef __GNUC__
-#include "linux.h"
+#include "linux/linux.h"
+#include "linux/limits.h"				/* PATH_MAX */
 #endif
 #if (FILESTORE_ADAPTER == FILESTORE_ADAPTER_NONE)
 #include "adapters/none.h"

@@ -8,6 +8,7 @@
 #include <cstring>	// basename()
 #include <dirent.h>	// dirent, opendir, readdir
 #include <unistd.h>	// access()
+#include <sys/stat.h>	/* stat */
 
 #include "config.h"	// uint8_t, uint32_t
 #include "main.h"	// ECONET_MAX_FILENAME_LEN
@@ -70,7 +71,7 @@ namespace nativefs {
 
 	size_t load(const char *localfile, char *buffer, uint32_t bufsize) {
 		FILESTORE_HANDLE handle;
-		size_t retval;
+		int retval;
 
 		if ((handle = open(localfile, "r")) == FILESTORE_EOF)
 			return FILESTORE_EOF;
@@ -86,7 +87,7 @@ namespace nativefs {
 
 	size_t save(const char *localfile, char *buffer, uint32_t bufsize) {
 		FILESTORE_HANDLE handle;
-		size_t retval;
+		int retval;
 
 		if ((handle = open(localfile, "w")) == FILESTORE_EOF)
 			return FILESTORE_EOF;
@@ -100,23 +101,48 @@ namespace nativefs {
 		return retval;
 	}
 
-	int cat(const char *localpath, FSDirectory *dir) {
+	int catalogue(const char *localpath, FSDirectory *dir, const char *mask, const uint8_t startentry, const uint8_t numentries) {
 		DIR *localdir;
 		struct dirent *direntry;
+		struct stat64 localattribs;
 		int i;
 
 		i = 0;
-		if ((localdir = opendir(localpath)) != NULL) {
-			while (((direntry = readdir(localdir)) != NULL) && (i < ECONET_MAX_DIRENTRIES)) {
-				strlcpy((char *) dir->fsp[i].name, direntry->d_name, ECONET_MAX_FILENAME_LEN);
-				readinf(direntry->d_name, &dir->fsp[i]);
-				i++;
+		if (numentries <= ECONET_MAX_DIRENTRIES) {
+			if ((localdir = opendir(localpath)) != NULL) {
+				while (((direntry = readdir(localdir)) != NULL) && (i < ECONET_MAX_DIRENTRIES)) {
+					if (i >= startentry) {
+						strlcpy((char *) dir->fsp[i].name, direntry->d_name, ECONET_MAX_FILENAME_LEN);
+						dir->fsp[i].loadaddr = 0;
+						dir->fsp[i].execaddr = 0;
+						dir->fsp[i].length = 0;
+						dir->fsp[i].attrib.R = false;
+						dir->fsp[i].attrib.W = false;
+						dir->fsp[i].attrib.L = false;
+						dir->fsp[i].attrib.D = false;
+						dir->fsp[i].attrib.E = false;
+						dir->fsp[i].attrib.r = false;
+						dir->fsp[i].attrib.w = false;
+						dir->fsp[i].attrib.e = false;
+						dir->fsp[i].attrib.P = false;
+						if (stat64(direntry->d_name, &localattribs)) {
+							dir->fsp[i].length = localattribs.st_size;
+							dir->fsp[i].ctime = localattribs.st_ctime;
+							dir->fsp[i].mtime = localattribs.st_mtime;
+							if ((S_ISDIR(localattribs.st_mode)) != 0)
+								dir->fsp[i].attrib.D = true;
+						} else
+							fprintf(stderr, "stat failed\n");
+						readinf(direntry->d_name, &dir->fsp[i]);
+						i++;
+					}
+				}
+				closedir(localdir);
+				return i;
 			}
-			closedir(localdir);
-			return i;
-		} else {
-			return 0;
 		}
+
+		return 0;
 	}
 
 	int remove(const char *objspec) {
@@ -260,7 +286,7 @@ namespace nativefs {
 		fp_inffile = fopen(inffilename, "w");
 		if (fp_inffile != NULL) {
 			netfs::attribtostr(&obj->attrib, access);
-			fprintf(fp_inffile, "%s %08x %08x %06x %s", inf_filename, &obj->loadaddr, &obj->execaddr, &length, access);
+			fprintf(fp_inffile, "%s %08x %08x %06x %s", inf_filename, obj->loadaddr, obj->execaddr, length, access);
 			fclose(fp_inffile);
 		} else {
 			fprintf(stderr, "nativefs::writeinf Unable to write .INF file %s\n", inffilename);

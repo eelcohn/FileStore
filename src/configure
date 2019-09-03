@@ -2299,7 +2299,7 @@ MAIN_SRCS="\\
 	settings.cpp \\
 	stations.cpp \\
 	users.cpp \\
-	platforms/linux.cpp"
+	platforms/linux/linux.cpp"
 
 MAIN_EXECUTABLE="FileStore"
 

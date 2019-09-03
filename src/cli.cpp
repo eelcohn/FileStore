@@ -92,11 +92,19 @@ namespace cli {
 	}
 
 	int cat(int argv, char **args) {
+		FSDirectory dir[ECONET_MAX_DIRENTRIES];
+		char access[FILESTORE_MAX_ATTRIBS];
+		int i, result;
+
 		if ((argv == 1) || (argv == 2)) {
 			if (argv == 1) {
-				return(netfs::cat(""));
+				result = netfs::catalogue(0x00, dir, "", 0, ECONET_MAX_DIRENTRIES);
 			} else {
-				return(netfs::cat(args[1]));
+				result = netfs::catalogue(0x00, dir, args[1], 0, ECONET_MAX_DIRENTRIES);
+			}
+			for (i = 0; i < result; i++) {
+				netfs::attribtostr(&dir->fsp[i].attrib, access);
+				printf("%-10s %08X %08X %06X %s\n", dir->fsp[i].name, dir->fsp[i].loadaddr, dir->fsp[i].execaddr, dir->fsp[i].length, access); /* TODO replace %-10s by ECONET_MAX_FILENAME_LEN */
 			}
 		} else {
 			return(-2);
