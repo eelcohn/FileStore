@@ -150,7 +150,7 @@ namespace aun {
 		int tx_sock, slen = sizeof(addr_outgoing);
  
 		if ((tx_sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
-			fprintf(stderr, "aun::transmitFrame: socket() failed.\n");
+			fprintf(stderr, "aun::ipv4_aun_Transmit: socket() failed.\n");
 			return(-1);
 		}
  
@@ -160,7 +160,7 @@ namespace aun {
 		addr_outgoing.sin_port		= htons(port);
      
 		if (inet_pton(AF_INET, address, &addr_outgoing.sin_addr) == 0) {
-			fprintf(stderr, "aun::transmitFrame: invalid IPv4 address.\n");
+			fprintf(stderr, "aun::ipv4_aun_Transmit: invalid IPv4 address.\n");
 			return(-2);
 		}
 
@@ -168,7 +168,7 @@ namespace aun {
 			netmonPrintFrame("eth", true, frame, tx_length);
 
 		if (sendto(tx_sock, (char *) &frame, sizeof(frame), 0, (struct sockaddr *) &addr_outgoing, slen) == -1) {
-			fprintf(stderr, "aun::transmitFrame: sendto() failed.\n");
+			fprintf(stderr, "aun::ipv4_aun_Transmit: sendto() failed.\n");
 			return(-3);
 		}
 //		close(tx_sock);
@@ -193,7 +193,7 @@ namespace aun {
 		server.rxhandler	= aun::rxHandler;		/* Handler for received data */
 
 		if (dtls::ssl_initialize(&server) != 0) {
-			fprintf(stderr, "dtls::ssl_initialize failed\n");
+			fprintf(stderr, "aun::ipv4_dtls_Listener: dtls::ssl_initialize() failed\n");
 			return -1;
 		}
 
@@ -217,7 +217,7 @@ namespace aun {
 
 		/* Initialize the DTLS context from the keystore and then create the server SSL state */
 		if (dtls::initContextFromKeystore(&client, "client", AF_INET, address, port) < 0) {
-			fprintf(stderr, "aun::ipv6_dtls_Listener: dtls_InitContextFromKeystore() error.\n");
+			fprintf(stderr, "aun::ipv4_dtls_Transmit: dtls_InitContextFromKeystore() error.\n");
 			dtls::shutdown(&client);
 			return -1;
 		}
@@ -225,7 +225,7 @@ namespace aun {
 		/* Open a DTLS connection to server:port */
 		sprintf(buffer, "%s:%d", address, port);
 		if (dtls::initClient(&client, buffer) < 0) {
-			fprintf(stderr, "aun::ipv6_dtls_Listener: dtls_InitClient() error.\n");
+			fprintf(stderr, "aun::ipv4_dtls_Transmit: dtls_InitClient() error.\n");
 			dtls::shutdown(&client);
 			return -1;
 		}
@@ -360,7 +360,7 @@ namespace aun {
 		int tx_sock, slen = sizeof(addr_outgoing);
  
 		if ((tx_sock = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
-			fprintf(stderr, "aun::transmitFrame: socket() failed.\n");
+			fprintf(stderr, "aun::ipv6_aun_Transmit: socket() failed.\n");
 			return(-1);
 		}
  
@@ -370,7 +370,7 @@ namespace aun {
 		addr_outgoing.sin6_port		= htons(port);
      
 		if (inet_pton(AF_INET6, address, &addr_outgoing.sin6_addr) == 0) {
-			fprintf(stderr, "aun::transmitFrame: invalid IPv4 address.\n");
+			fprintf(stderr, "aun::ipv6_aun_Transmit: invalid IPv6 address.\n");
 			return(-2);
 		}
 
@@ -378,7 +378,7 @@ namespace aun {
 			netmonPrintFrame("eth", true, frame, tx_length);
 
 		if (sendto(tx_sock, (char *) &frame, sizeof(frame), 0, (struct sockaddr *) &addr_outgoing, slen) == -1) {
-			fprintf(stderr, "aun::transmitFrame: sendto() failed.\n");
+			fprintf(stderr, "aun::ipv6_aun_Transmit: sendto() failed.\n");
 			return(-3);
 		}
 //		close(tx_sock);
@@ -403,7 +403,7 @@ namespace aun {
 		server.rxhandler	= aun::rxHandler;		/* Handler for received data */
 
 		if (dtls::ssl_initialize(&server) != 0) {
-			fprintf(stderr, "dtls::ssl_initialize failed\n");
+			fprintf(stderr, "aun::ipv6_dtls_Listener: dtls::ssl_initialize() failed\n");
 			return -1;
 		}
 
@@ -501,7 +501,7 @@ econet::protohandlers[0xD1] = econet::portD1handler;
 					break;
 
 				default :
-					fprintf(stderr, "Unknown transaction type 0x%02X in AUN frame\n", rx_data->aun.type);
+					fprintf(stderr, "aun::rxHandler: Unknown transaction type 0x%02X in AUN frame\n", rx_data->aun.type);
 					break;
 			}
 		}
@@ -527,4 +527,3 @@ econet::protohandlers[0xD1] = econet::portD1handler;
 		return true;
 	}
 }
-
