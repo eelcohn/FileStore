@@ -171,7 +171,9 @@ namespace netfs {
 	}
 
 	/* Convert Acorn object attributes to a string */
-	void attribtostr(const FSAttributes *attrib, char *string) {
+	int attribtostr(const FSAttributes *attrib, char *string) {
+		const *strstart = *string
+
 		if (attrib->R == true)
 			*string++ = 'R';
 		if (attrib->W == true)
@@ -191,6 +193,8 @@ namespace netfs {
 		if (attrib->P == true)
 			*string++ = 'P';
 		*string = '\0';
+
+		return string - strstart;
 	}
 
 //private:
