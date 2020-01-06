@@ -67,7 +67,7 @@ namespace netfs {
 	FILESTORE_HANDLE newhandle(void);
 	void freehandle(FILESTORE_HANDLE handle);
 	void strtoattrib(const char *string, FSAttributes *attrib);
-	void attribtostr(const FSAttributes *attrib, char *string);
+	intd attribtostr(const FSAttributes *attrib, char *string);
 
 //private:
 	const char *getDiscTitle(int i);
