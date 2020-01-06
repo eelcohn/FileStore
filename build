@@ -3,12 +3,15 @@ echo Econet FileStore build script
 echo
 cd src
 make clean
+[ $? -eq 0 ] || exit $?
 autoconf
+[ $? -eq 0 ] || exit $?
 ./configure --with-adapter=none --enable-debug --enable-ipv6
+[ $? -eq 0 ] || exit $?
 make
 [ $? -eq 0 ] || exit $?
 make install
+[ $? -eq 0 ] || exit $?
 # cp FileStore ..
 cd ..
 valgrind --leak-check=full --show-leak-kinds=all --show-reachable=no --track-origins=yes ./FileStore
-
